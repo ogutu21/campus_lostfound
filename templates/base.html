@@ -14,6 +14,8 @@
     nav form { margin: 0; }
     .linklike { background: none; border: none; color: #fff; cursor: pointer;
                 font: inherit; text-decoration: underline; padding: 0; }
+    .unread { background: #e67e22; color: #fff; border-radius: 10px;
+              padding: 1px 7px; font-size: .8rem; }
     main { max-width: 900px; margin: 24px auto; padding: 0 16px; }
     .messages { list-style: none; padding: 0; }
     .messages li { background: #e8f5e9; border-left: 4px solid #27ae60;
@@ -27,6 +29,9 @@
     form.search { display: flex; gap: 8px; margin-bottom: 20px; }
     form.search input, form.search select, form.search button { padding: 8px; }
     .errorlist { color: #c0392b; padding-left: 18px; }
+    .bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px;
+              background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .bubble.mine { margin-left: auto; background: #dbeafe; }
   </style>
 </head>
 <body>
@@ -36,6 +41,7 @@
       {% if user.is_authenticated %}
         <span>Hi, {{ user.first_name }}</span>
         <a href="{% url 'items:create' %}">Post an item</a>
+        <a href="{% url 'items:inbox' %}">Messages{% if unread_count %} <span class="unread">{{ unread_count }}</span>{% endif %}</a>
         <form method="post" action="{% url 'accounts:logout' %}">
           {% csrf_token %}
           <button type="submit" class="linklike">Log out</button>

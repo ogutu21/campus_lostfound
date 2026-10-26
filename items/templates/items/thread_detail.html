@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'items:inbox' %}">&larr; All messages</a></p>
+
+<h2>{{ thread.item.title }}</h2>
+<p class="meta">
+  Private conversation with <strong>{{ other.get_full_name }}</strong> &middot;
+  <a href="{% url 'items:detail' thread.item.pk %}">view the post</a>
+</p>
+
+{% for m in chat %}
+  <div class="bubble {% if m.sender == user %}mine{% endif %}">
+    <div class="meta">{{ m.sender.get_full_name }} &middot; {{ m.created_at|date:"j M, H:i" }}</div>
+    {{ m.body|linebreaksbr }}
+  </div>
+{% empty %}
+  <p class="meta">No messages yet. Say hello below.</p>
+{% endfor %}
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Send</button>
+</form>
+{% endblock %}

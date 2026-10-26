@@ -27,6 +27,15 @@
         <button type="submit">Mark as resolved</button>
       </form>
     {% endif %}
+  {% elif user.is_authenticated %}
+    <hr>
+    <form method="post" action="{% url 'items:thread_start' item.pk %}">
+      {% csrf_token %}
+      <button type="submit">Message {{ item.poster.first_name }} privately</button>
+    </form>
+  {% else %}
+    <hr>
+    <p class="meta"><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a> to message the poster privately.</p>
   {% endif %}
 </div>
 

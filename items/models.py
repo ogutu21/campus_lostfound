@@ -57,3 +57,37 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.author.id_number} on {self.item.title}"
+
+
+class Thread(models.Model):
+    """A private conversation about one item, between its poster and one other user."""
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="threads")
+    starter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name="started_threads")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]   # most recently active first
+        constraints = [
+            models.UniqueConstraint(fields=["item", "starter"],
+                                    name="one_thread_per_item_per_starter"),
+        ]
+
+    def __str__(self):
+        return f"{self.starter.id_number} about {self.item.title}"
+
+
+class Message(models.Model):
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                               related_name="sent_messages")
+    body = models.TextField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.sender.id_number}: {self.body[:30]}"

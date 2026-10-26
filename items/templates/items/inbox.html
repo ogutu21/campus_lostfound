@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<h2>Your private messages</h2>
+
+{% for t in threads %}
+  <div class="card" style="display:block">
+    <a href="{% url 'items:thread' t.pk %}"><strong>{{ t.item.title }}</strong></a>
+    {% if t.unread %}<span class="unread">{{ t.unread }} new</span>{% endif %}
+    <div class="meta">
+      With {{ t.other.get_full_name }} &middot; last activity {{ t.updated_at|date:"j M Y, H:i" }}
+    </div>
+  </div>
+{% empty %}
+  <p>You have no private conversations yet. Open an item and use
+     "Message ... privately" to start one.</p>
+{% endfor %}
+{% endblock %}

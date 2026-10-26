@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Comment, Item
+from .models import Comment, Item, Message
 
 MAX_IMAGE_MB = 5
 
@@ -32,4 +32,12 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ["body"]
         widgets = {"body": forms.Textarea(attrs={"rows": 3, "placeholder": "Write a comment..."})}
+        labels = {"body": ""}
+
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ["body"]
+        widgets = {"body": forms.Textarea(attrs={"rows": 3, "placeholder": "Write a private message..."})}
         labels = {"body": ""}
