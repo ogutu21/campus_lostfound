@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form class="search" method="get">
+  <input type="text" name="q" value="{{ query }}" placeholder="Search items...">
+  <select name="kind">
+    <option value="">Lost &amp; Found</option>
+    <option value="LOST" {% if kind == "LOST" %}selected{% endif %}>Lost</option>
+    <option value="FOUND" {% if kind == "FOUND" %}selected{% endif %}>Found</option>
+  </select>
+  <select name="category">
+    <option value="">All categories</option>
+    {% for value, label in categories %}
+      <option value="{{ value }}" {% if category == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Search</button>
+</form>
+
+{% for item in page_obj %}
+  <div class="card">
+    {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.title }}">{% endif %}
+    <div>
+      <span class="badge {{ item.kind }}">{{ item.get_kind_display }}</span>
+      <h3><a href="{% url 'items:detail' item.pk %}">{{ item.title }}</a></h3>
+      <div class="meta">
+        {{ item.location }} &middot; {{ item.date_occurred }} &middot;
+        {{ item.get_category_display }}
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <p>No items found.</p>
+{% endfor %}
+
+{% if page_obj.paginator.num_pages > 1 %}
+  <p class="meta">
+    {% if page_obj.has_previous %}
+      <a href="?{% if filter_qs %}{{ filter_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">&larr; Previous</a>
+    {% endif %}
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}
+      <a href="?{% if filter_qs %}{{ filter_qs }}&{% endif %}page={{ page_obj.next_page_number }}">Next &rarr;</a>
+    {% endif %}
+  </p>
+{% endif %}
+{% endblock %}

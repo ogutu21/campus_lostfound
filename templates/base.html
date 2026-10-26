@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Campus Lost &amp; Found{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f5f6f8; color: #222; }
+    header { background: #1f3a5f; color: #fff; padding: 14px 24px;
+             display: flex; justify-content: space-between; align-items: center; }
+    header a { color: #fff; text-decoration: none; }
+    .brand { font-weight: 600; font-size: 1.2rem; }
+    nav { display: flex; gap: 14px; align-items: center; }
+    nav form { margin: 0; }
+    .linklike { background: none; border: none; color: #fff; cursor: pointer;
+                font: inherit; text-decoration: underline; padding: 0; }
+    main { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    .messages { list-style: none; padding: 0; }
+    .messages li { background: #e8f5e9; border-left: 4px solid #27ae60;
+                   padding: 10px 14px; margin-bottom: 14px; border-radius: 4px; }
+    .card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 14px;
+            display: flex; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .card img { width: 110px; height: 110px; object-fit: cover; border-radius: 6px; }
+    .badge { padding: 2px 8px; border-radius: 10px; font-size: .8rem; color: #fff; }
+    .LOST { background: #c0392b; } .FOUND { background: #27ae60; }
+    .meta { color: #666; font-size: .9rem; }
+    form.search { display: flex; gap: 8px; margin-bottom: 20px; }
+    form.search input, form.search select, form.search button { padding: 8px; }
+    .errorlist { color: #c0392b; padding-left: 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="{% url 'items:list' %}">Campus Lost &amp; Found</a>
+    <nav>
+      {% if user.is_authenticated %}
+        <span>Hi, {{ user.first_name }}</span>
+        <a href="{% url 'items:create' %}">Post an item</a>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="linklike">Log out</button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Log in</a>
+        <a href="{% url 'accounts:register' %}">Register</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

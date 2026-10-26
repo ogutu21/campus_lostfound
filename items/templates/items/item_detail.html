@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.title }}{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'items:list' %}">&larr; Back to all items</a></p>
+<div class="card" style="display:block">
+  <span class="badge {{ item.kind }}">{{ item.get_kind_display }}</span>
+  {% if item.status == "RESOLVED" %}<span class="badge" style="background:#777">Resolved</span>{% endif %}
+  <h2>{{ item.title }}</h2>
+  {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.title }}" style="width:100%;max-width:500px;height:auto">{% endif %}
+  <p>{{ item.description|linebreaks }}</p>
+  <p class="meta">
+    <strong>Category:</strong> {{ item.get_category_display }}<br>
+    <strong>Location:</strong> {{ item.location }}<br>
+    <strong>Date:</strong> {{ item.date_occurred }}<br>
+    <strong>Posted by:</strong> {{ item.poster.get_full_name }} on {{ item.created_at|date:"j M Y" }}
+  </p>
+
+  {% if user == item.poster %}
+    <hr>
+    <a href="{% url 'items:edit' item.pk %}">Edit</a> |
+    <a href="{% url 'items:delete' item.pk %}">Delete</a>
+    {% if item.status == "ACTIVE" %}
+      <form method="post" action="{% url 'items:resolve' item.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit">Mark as resolved</button>
+      </form>
+    {% endif %}
+  {% endif %}
+</div>
+
+<h3>Conversation ({{ comments|length }})</h3>
+
+{% for c in comments %}
+  <div class="card" style="display:block">
+    <strong>{{ c.author.get_full_name }}</strong>
+    <span class="meta">{{ c.created_at|date:"j M Y, H:i" }}</span>
+    <p>{{ c.body|linebreaksbr }}</p>
+    {% if user == c.author or user == item.poster %}
+      <form method="post" action="{% url 'items:comment_delete' c.pk %}">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+      </form>
+    {% endif %}
+  </div>
+{% empty %}
+  <p class="meta">No comments yet.</p>
+{% endfor %}
+
+{% if user.is_authenticated %}
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Post comment</button>
+  </form>
+{% else %}
+  <p><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a> to join the conversation.</p>
+{% endif %}
+{% endblock %}
