@@ -4,6 +4,8 @@ Django settings for the campus lost & found project.
 import os
 from pathlib import Path
 
+import dj_database_url
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -13,13 +15,20 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-insecure-key-change-m
 # Debug is ON locally. On the server, set DJANGO_DEBUG=0.
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 
-# Comma-separated domain names, e.g. "yourname.pythonanywhere.com"
+# Comma-separated domain names, e.g. "ogutu.pythonanywhere.com"
 ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h]
 
-# Full site addresses, e.g. "https://yourname.pythonanywhere.com"
+# Full site addresses, e.g. "https://ogutu.pythonanywhere.com"
 CSRF_TRUSTED_ORIGINS = [
     o for o in os.environ.get("DJANGO_CSRF_ORIGINS", "").split(",") if o
 ]
+
+# Render sets this variable automatically with your site's domain.
+# Harmless on PythonAnywhere, where it is simply not set.
+RENDER_HOST = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_HOST:
+    ALLOWED_HOSTS.append(RENDER_HOST)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_HOST}")
 
 
 # --- Applications ---
@@ -36,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",   # serves static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -65,12 +75,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # --- Database ---
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# If DATABASE_URL is set (e.g. PostgreSQL on some hosts) use it.
+# Otherwise use SQLite, which is what PythonAnywhere and your laptop use.
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {"default": dj_database_url.config(conn_max_age=600)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 
 # --- Users and passwords ---
@@ -109,3 +124,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 if not DEBUG:
     SESSION_COOKIE_SECURE = True   # login cookies only travel over HTTPS
     CSRF_COOKIE_SECURE = True
+    # Tell browsers to insist on HTTPS for this site. Start small (1 hour);
+    # we raise it later once we're sure nothing breaks.
+    SECURE_HSTS_SECONDS = 3600
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
