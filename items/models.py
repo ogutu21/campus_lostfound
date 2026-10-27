@@ -35,6 +35,10 @@ class Item(models.Model):
     image = models.ImageField(upload_to="items/%Y/%m/", blank=True)
     status = models.CharField(max_length=10, choices=Status.choices,
                               default=Status.ACTIVE)
+    is_hidden = models.BooleanField(
+        default=False,
+        help_text="Hidden by a moderator. Only the poster and staff can see it.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -68,7 +72,7 @@ class Thread(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-updated_at"]   # most recently active first
+        ordering = ["-updated_at"]
         constraints = [
             models.UniqueConstraint(fields=["item", "starter"],
                                     name="one_thread_per_item_per_starter"),
@@ -91,3 +95,32 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender.id_number}: {self.body[:30]}"
+
+
+class Report(models.Model):
+    """One person flagging one post for a moderator to review."""
+
+    class Reason(models.TextChoices):
+        FAKE = "FAKE", "Fake or misleading post"
+        INAPPROPRIATE = "INAPPROPRIATE", "Inappropriate content"
+        SPAM = "SPAM", "Spam"
+        PERSONAL = "PERSONAL", "Shows someone's private information"
+        OTHER = "OTHER", "Other"
+
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="reports")
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                 related_name="reports_made")
+    reason = models.CharField(max_length=15, choices=Reason.choices)
+    details = models.TextField(max_length=500, blank=True)
+    handled = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["handled", "-created_at"]   # unhandled reports first
+        constraints = [
+            models.UniqueConstraint(fields=["item", "reporter"],
+                                    name="one_report_per_item_per_reporter"),
+        ]
+
+    def __str__(self):
+        return f"{self.get_reason_display()} - {self.item.title}"

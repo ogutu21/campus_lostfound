@@ -3,16 +3,19 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import HttpResponseForbidden
+from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import CommentForm, ItemForm, MessageForm
-from .models import Comment, Item, Thread
+from .forms import CommentForm, ItemForm, MessageForm, ReportForm
+from .models import Comment, Item, Report, Thread
 
 
 def item_list(request):
-    items = Item.objects.filter(status=Item.Status.ACTIVE).select_related("poster")
+    items = (
+        Item.objects.filter(status=Item.Status.ACTIVE, is_hidden=False)
+        .select_related("poster")
+    )
 
     kind = request.GET.get("kind", "")
     category = request.GET.get("category", "")
@@ -49,6 +52,11 @@ def item_list(request):
 
 def item_detail(request, pk):
     item = get_object_or_404(Item, pk=pk)
+
+    # Hidden posts are visible only to their poster and to staff.
+    if item.is_hidden and request.user != item.poster and not request.user.is_staff:
+        raise Http404
+
     comments = item.comments.select_related("author")
 
     if request.method == "POST":
@@ -135,6 +143,35 @@ def comment_delete(request, pk):
     return redirect("items:detail", pk=item_pk)
 
 
+# ---------- Reporting ----------
+
+@login_required
+def report_create(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+
+    if item.poster == request.user:
+        messages.info(request, "You can't report your own post.")
+        return redirect("items:detail", pk=item.pk)
+
+    if Report.objects.filter(item=item, reporter=request.user).exists():
+        messages.info(request, "You have already reported this post. Thank you.")
+        return redirect("items:list")
+
+    if request.method == "POST":
+        form = ReportForm(request.POST)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.item = item
+            report.reporter = request.user
+            report.save()
+            messages.success(request, "Thank you. A moderator will review your report.")
+            return redirect("items:list")
+    else:
+        form = ReportForm()
+
+    return render(request, "items/report_form.html", {"form": form, "item": item})
+
+
 # ---------- Private messaging ----------
 
 @login_required
@@ -142,6 +179,8 @@ def comment_delete(request, pk):
 def thread_start(request, pk):
     """Open (or reuse) a private conversation with the poster of item `pk`."""
     item = get_object_or_404(Item, pk=pk)
+    if item.is_hidden:
+        raise Http404
     if item.poster == request.user:
         messages.info(request, "This is your own post, so there is nobody to message.")
         return redirect("items:detail", pk=item.pk)
@@ -161,7 +200,6 @@ def inbox(request):
         ))
     )
     for t in threads:
-        # The "other person" in this conversation, for display.
         t.other = t.item.poster if user.pk == t.starter_id else t.starter
     return render(request, "items/inbox.html", {"threads": threads})
 
@@ -182,12 +220,11 @@ def thread_detail(request, pk):
             msg.thread = thread
             msg.sender = request.user
             msg.save()
-            thread.save(update_fields=["updated_at"])   # bumps it to the top of the inbox
+            thread.save(update_fields=["updated_at"])
             return redirect("items:thread", pk=thread.pk)
     else:
         form = MessageForm()
 
-    # Opening the conversation marks the other person's messages as read.
     thread.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
 
     other = thread.item.poster if request.user.pk == thread.starter_id else thread.starter

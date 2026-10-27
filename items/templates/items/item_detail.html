@@ -4,6 +4,13 @@
 
 {% block content %}
 <p><a href="{% url 'items:list' %}">&larr; Back to all items</a></p>
+
+{% if item.is_hidden %}
+  <p class="messages"><li style="list-style:none;background:#fdecea;border-left:4px solid #c0392b;padding:10px 14px;border-radius:4px">
+    This post is hidden by a moderator. Only you and staff can see it.
+  </li></p>
+{% endif %}
+
 <div class="card" style="display:block">
   <span class="badge {{ item.kind }}">{{ item.get_kind_display }}</span>
   {% if item.status == "RESOLVED" %}<span class="badge" style="background:#777">Resolved</span>{% endif %}
@@ -29,10 +36,11 @@
     {% endif %}
   {% elif user.is_authenticated %}
     <hr>
-    <form method="post" action="{% url 'items:thread_start' item.pk %}">
+    <form method="post" action="{% url 'items:thread_start' item.pk %}" style="display:inline">
       {% csrf_token %}
       <button type="submit">Message {{ item.poster.first_name }} privately</button>
     </form>
+    &nbsp;<a class="meta" href="{% url 'items:report' item.pk %}">Report this post</a>
   {% else %}
     <hr>
     <p class="meta"><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a> to message the poster privately.</p>
