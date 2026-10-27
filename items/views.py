@@ -7,8 +7,8 @@ from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import CommentForm, ItemForm, MessageForm, ReportForm
-from .models import Comment, Item, Report, Thread
+from .forms import ClaimForm, CommentForm, ItemForm, MessageForm, ReportForm
+from .models import Claim, Comment, Item, Message, Report, Thread
 
 
 def item_list(request):
@@ -72,8 +72,12 @@ def item_detail(request, pk):
     else:
         form = CommentForm()
 
+    user_claim = None
+    if request.user.is_authenticated:
+        user_claim = Claim.objects.filter(item=item, claimant=request.user).first()
+
     return render(request, "items/item_detail.html", {
-        "item": item, "comments": comments, "form": form,
+        "item": item, "comments": comments, "form": form, "user_claim": user_claim,
     })
 
 
@@ -170,6 +174,102 @@ def report_create(request, pk):
         form = ReportForm()
 
     return render(request, "items/report_form.html", {"form": form, "item": item})
+
+
+# ---------- Claims ----------
+
+@login_required
+def claim_create(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    if item.is_hidden:
+        raise Http404
+
+    if item.poster == request.user:
+        messages.info(request, "This is your own post.")
+        return redirect("items:detail", pk=item.pk)
+    if item.kind != Item.Kind.FOUND:
+        messages.info(request, "Only found items can be claimed.")
+        return redirect("items:detail", pk=item.pk)
+    if Claim.objects.filter(item=item, claimant=request.user).exists():
+        messages.info(request, "You have already claimed this item.")
+        return redirect("items:detail", pk=item.pk)
+    if item.status != Item.Status.ACTIVE:
+        messages.info(request, "This item has already been resolved.")
+        return redirect("items:detail", pk=item.pk)
+
+    if request.method == "POST":
+        form = ClaimForm(request.POST)
+        if form.is_valid():
+            claim = form.save(commit=False)
+            claim.item = item
+            claim.claimant = request.user
+            claim.save()
+            messages.success(request, "Your claim was sent. The finder will review your answer.")
+            return redirect("items:detail", pk=item.pk)
+    else:
+        form = ClaimForm()
+
+    question = item.verification_question or (
+        "Describe the item in detail so the finder can confirm it is yours."
+    )
+    return render(request, "items/claim_form.html", {
+        "form": form, "item": item, "question": question,
+    })
+
+
+@login_required
+def claims_received(request):
+    claims = list(
+        Claim.objects.filter(item__poster=request.user)
+        .select_related("item", "claimant")
+    )
+    pending = [c for c in claims if c.status == Claim.Status.PENDING]
+    decided = [c for c in claims if c.status != Claim.Status.PENDING]
+    return render(request, "items/claims_received.html", {
+        "pending": pending, "decided": decided,
+    })
+
+
+@login_required
+@require_POST
+def claim_decide(request, pk):
+    claim = get_object_or_404(
+        Claim.objects.select_related("item", "claimant"), pk=pk
+    )
+    if claim.item.poster != request.user:
+        return HttpResponseForbidden("Only the finder can decide on this claim.")
+    if claim.status != Claim.Status.PENDING:
+        messages.info(request, "This claim has already been decided.")
+        return redirect("items:claims")
+
+    action = request.POST.get("action")
+
+    if action == "approve":
+        claim.status = Claim.Status.APPROVED
+        claim.save()
+        thread, _created = Thread.objects.get_or_create(
+            item=claim.item, starter=claim.claimant
+        )
+        Message.objects.create(
+            thread=thread,
+            sender=request.user,
+            body=(
+                f'Your claim on "{claim.item.title}" was approved. '
+                "Let's arrange how and where to hand it over."
+            ),
+        )
+        thread.save(update_fields=["updated_at"])
+        messages.success(request, "Claim approved. You can now arrange the handover here.")
+        return redirect("items:thread", pk=thread.pk)
+
+    if action == "reject":
+        claim.status = Claim.Status.REJECTED
+        claim.save()
+        messages.success(request, "Claim rejected.")
+        return redirect("items:claims")
+
+    messages.error(request, "Unknown action.")
+    return redirect("items:claims")
 
 
 # ---------- Private messaging ----------

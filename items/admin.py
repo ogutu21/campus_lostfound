@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Comment, Item, Message, Report, Thread
+from .models import Claim, Comment, Item, Message, Report, Thread
 
 
 @admin.register(Item)
@@ -34,6 +34,12 @@ class ReportAdmin(admin.ModelAdmin):
     @admin.action(description="Hide the posts named in the selected reports")
     def hide_reported_posts(self, request, queryset):
         Item.objects.filter(reports__in=queryset).update(is_hidden=True)
+
+
+@admin.register(Claim)
+class ClaimAdmin(admin.ModelAdmin):
+    list_display = ("item", "claimant", "status", "created_at")
+    list_filter = ("status",)
 
 
 admin.site.register(Comment)

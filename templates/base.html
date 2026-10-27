@@ -41,6 +41,7 @@
       {% if user.is_authenticated %}
         <span>Hi, {{ user.first_name }}</span>
         <a href="{% url 'items:create' %}">Post an item</a>
+        <a href="{% url 'items:claims' %}">Claims{% if pending_claims %} <span class="unread">{{ pending_claims }}</span>{% endif %}</a>
         <a href="{% url 'items:inbox' %}">Messages{% if unread_count %} <span class="unread">{{ unread_count }}</span>{% endif %}</a>
         <form method="post" action="{% url 'accounts:logout' %}">
           {% csrf_token %}

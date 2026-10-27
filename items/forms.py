@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Comment, Item, Message, Report
+from .models import Claim, Comment, Item, Message, Report
 
 MAX_IMAGE_MB = 5
 
@@ -9,7 +9,7 @@ class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
         fields = ["kind", "title", "description", "category",
-                  "location", "date_occurred", "image"]
+                  "location", "date_occurred", "image", "verification_question"]
         widgets = {
             "date_occurred": forms.DateInput(attrs={"type": "date"}),
             "description": forms.Textarea(attrs={"rows": 4}),
@@ -25,6 +25,16 @@ class ItemForm(forms.ModelForm):
             if image.content_type not in ("image/jpeg", "image/png", "image/webp"):
                 raise forms.ValidationError("Please upload a JPG, PNG or WebP image.")
         return image
+
+    def clean(self):
+        cleaned = super().clean()
+        question = (cleaned.get("verification_question") or "").strip()
+        if cleaned.get("kind") == Item.Kind.FOUND and not question:
+            self.add_error(
+                "verification_question",
+                "Found items need a verification question, so only the real owner can claim it.",
+            )
+        return cleaned
 
 
 class CommentForm(forms.ModelForm):
@@ -49,3 +59,11 @@ class ReportForm(forms.ModelForm):
         fields = ["reason", "details"]
         widgets = {"details": forms.Textarea(attrs={"rows": 3})}
         labels = {"details": "Anything else a moderator should know? (optional)"}
+
+
+class ClaimForm(forms.ModelForm):
+    class Meta:
+        model = Claim
+        fields = ["answer"]
+        widgets = {"answer": forms.Textarea(attrs={"rows": 4})}
+        labels = {"answer": "Your answer"}

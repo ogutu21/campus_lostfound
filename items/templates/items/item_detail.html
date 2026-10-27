@@ -6,9 +6,9 @@
 <p><a href="{% url 'items:list' %}">&larr; Back to all items</a></p>
 
 {% if item.is_hidden %}
-  <p class="messages"><li style="list-style:none;background:#fdecea;border-left:4px solid #c0392b;padding:10px 14px;border-radius:4px">
+  <div style="background:#fdecea;border-left:4px solid #c0392b;padding:10px 14px;margin-bottom:14px;border-radius:4px">
     This post is hidden by a moderator. Only you and staff can see it.
-  </li></p>
+  </div>
 {% endif %}
 
 <div class="card" style="display:block">
@@ -26,8 +26,13 @@
 
   {% if user == item.poster %}
     <hr>
+    {% if item.kind == "FOUND" and item.verification_question %}
+      <p class="meta"><strong>Your verification question (only you can see this):</strong>
+        {{ item.verification_question }}</p>
+    {% endif %}
     <a href="{% url 'items:edit' item.pk %}">Edit</a> |
-    <a href="{% url 'items:delete' item.pk %}">Delete</a>
+    <a href="{% url 'items:delete' item.pk %}">Delete</a> |
+    <a href="{% url 'items:claims' %}">Claims on your items</a>
     {% if item.status == "ACTIVE" %}
       <form method="post" action="{% url 'items:resolve' item.pk %}" style="display:inline">
         {% csrf_token %}
@@ -36,6 +41,12 @@
     {% endif %}
   {% elif user.is_authenticated %}
     <hr>
+    {% if user_claim %}
+      <p><strong>Your claim:</strong> {{ user_claim.get_status_display }}</p>
+    {% elif item.kind == "FOUND" and item.status == "ACTIVE" %}
+      <a href="{% url 'items:claim' item.pk %}"><strong>This is mine</strong></a>
+      &nbsp;|&nbsp;
+    {% endif %}
     <form method="post" action="{% url 'items:thread_start' item.pk %}" style="display:inline">
       {% csrf_token %}
       <button type="submit">Message {{ item.poster.first_name }} privately</button>
@@ -43,7 +54,7 @@
     &nbsp;<a class="meta" href="{% url 'items:report' item.pk %}">Report this post</a>
   {% else %}
     <hr>
-    <p class="meta"><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a> to message the poster privately.</p>
+    <p class="meta"><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a> to message the poster privately{% if item.kind == "FOUND" %} or claim this item{% endif %}.</p>
   {% endif %}
 </div>
 

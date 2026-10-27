@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Claim this item{% endblock %}
+
+{% block content %}
+<h2>Claim: {{ item.title }}</h2>
+<p class="meta">
+  The finder will compare your answer with the item they are holding.
+  Answer honestly: you only get one attempt.
+</p>
+
+<div class="card" style="display:block">
+  <strong>Verification question</strong>
+  <p>{{ question }}</p>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Send claim</button>
+  <a href="{% url 'items:detail' item.pk %}">Cancel</a>
+</form>
+{% endblock %}

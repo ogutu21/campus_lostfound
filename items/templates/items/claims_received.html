@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Claims{% endblock %}
+
+{% block content %}
+<h2>Claims on your found items</h2>
+
+<h3>Waiting for your decision</h3>
+{% for c in pending %}
+  <div class="card" style="display:block">
+    <a href="{% url 'items:detail' c.item.pk %}"><strong>{{ c.item.title }}</strong></a>
+    <div class="meta">
+      Claimed by {{ c.claimant.get_full_name }} ({{ c.claimant.id_number }})
+      &middot; {{ c.created_at|date:"j M Y, H:i" }}
+    </div>
+    <p><strong>Your question:</strong> {{ c.item.verification_question|default:"(none set)" }}</p>
+    <p><strong>Their answer:</strong><br>{{ c.answer|linebreaksbr }}</p>
+    <form method="post" action="{% url 'items:claim_decide' c.pk %}">
+      {% csrf_token %}
+      <button type="submit" name="action" value="approve">Approve</button>
+      <button type="submit" name="action" value="reject">Reject</button>
+    </form>
+    <p class="meta">
+      Approving opens a private conversation so you can arrange the handover.
+      For valuables, meet at a public campus spot and check their ID.
+    </p>
+  </div>
+{% empty %}
+  <p class="meta">No claims waiting.</p>
+{% endfor %}
+
+<h3>Already decided</h3>
+{% for c in decided %}
+  <div class="card" style="display:block">
+    <a href="{% url 'items:detail' c.item.pk %}">{{ c.item.title }}</a>
+    &middot; {{ c.claimant.get_full_name }} &middot; <strong>{{ c.get_status_display }}</strong>
+  </div>
+{% empty %}
+  <p class="meta">Nothing yet.</p>
+{% endfor %}
+{% endblock %}

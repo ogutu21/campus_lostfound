@@ -1,18 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Report a post{% endblock %}
+{% block title %}{{ heading }}{% endblock %}
 
 {% block content %}
-<h2>Report this post</h2>
-<p class="meta">
-  You are reporting: <strong>{{ item.title }}</strong>.
-  The poster will not be told who reported it.
-</p>
-
-<form method="post">
+<h2>{{ heading }}</h2>
+<form method="post" enctype="multipart/form-data">
   {% csrf_token %}
   {{ form.as_p }}
-  <button type="submit">Send report</button>
-  <a href="{% url 'items:detail' item.pk %}">Cancel</a>
+  <button type="submit">Save</button>
+  <a href="{% url 'items:list' %}">Cancel</a>
 </form>
 {% endblock %}

@@ -33,6 +33,15 @@ class Item(models.Model):
                                 help_text="Where it was lost or found, e.g. Library 2nd floor")
     date_occurred = models.DateField(help_text="Date it was lost or found")
     image = models.ImageField(upload_to="items/%Y/%m/", blank=True)
+    verification_question = models.CharField(
+        "Verification question",
+        max_length=200,
+        blank=True,
+        help_text=(
+            "Required for found items. Ask something only the real owner would know "
+            "(e.g. 'What is on the lock screen?'). Do NOT put the answer in the description."
+        ),
+    )
     status = models.CharField(max_length=10, choices=Status.choices,
                               default=Status.ACTIVE)
     is_hidden = models.BooleanField(
@@ -116,7 +125,7 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["handled", "-created_at"]   # unhandled reports first
+        ordering = ["handled", "-created_at"]
         constraints = [
             models.UniqueConstraint(fields=["item", "reporter"],
                                     name="one_report_per_item_per_reporter"),
@@ -124,3 +133,30 @@ class Report(models.Model):
 
     def __str__(self):
         return f"{self.get_reason_display()} - {self.item.title}"
+
+
+class Claim(models.Model):
+    """Someone saying 'this found item is mine', with an answer to the verification question."""
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Waiting for the finder"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
+
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="claims")
+    claimant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                 related_name="claims_made")
+    answer = models.TextField(max_length=1000)
+    status = models.CharField(max_length=10, choices=Status.choices,
+                              default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["item", "claimant"],
+                                    name="one_claim_per_item_per_claimant"),
+        ]
+
+    def __str__(self):
+        return f"{self.claimant.id_number} claims {self.item.title}"
