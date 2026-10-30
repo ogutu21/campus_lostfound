@@ -11,7 +11,10 @@
 
 <article class="sheet">
   <div class="sheet-head {{ item.kind }}">
-    <span><span aria-hidden="true">{% include "items/_icon.html" %}</span> {{ item.get_kind_display }}</span>
+    <span style="display:inline-flex;align-items:center;gap:.55rem">
+      {% include "items/_icon.html" with size=22 %}
+      {{ item.get_kind_display }}
+    </span>
     <span class="no">No. {{ item.pk }}</span>
   </div>
   <div class="sheet-body">
@@ -21,10 +24,14 @@
     {{ item.description|linebreaks }}
 
     <dl class="facts">
-      <dt>Category</dt><dd>{{ item.get_category_display }}</dd>
-      <dt>Location</dt><dd>{{ item.location }}</dd>
-      <dt>Date</dt><dd>{{ item.date_occurred|date:"j M Y" }}</dd>
-      <dt>Posted by</dt><dd>{{ item.poster.get_full_name }}, {{ item.created_at|date:"j M Y" }}</dd>
+      <dt style="display:flex;align-items:center;gap:.4rem">{% include "items/_icon.html" with size=18 %}Category</dt>
+      <dd>{{ item.get_category_display }}</dd>
+      <dt style="display:flex;align-items:center;gap:.4rem">{% include "items/_ui_icon.html" with name="pin" size=18 %}Location</dt>
+      <dd>{{ item.location }}</dd>
+      <dt style="display:flex;align-items:center;gap:.4rem">{% include "items/_ui_icon.html" with name="calendar" size=18 %}Date</dt>
+      <dd>{{ item.date_occurred|date:"j M Y" }}</dd>
+      <dt style="display:flex;align-items:center;gap:.4rem">{% include "items/_ui_icon.html" with name="user" size=18 %}Posted by</dt>
+      <dd>{{ item.poster.get_full_name }}, {{ item.created_at|date:"j M Y" }}</dd>
     </dl>
 
     {% if user == item.poster %}

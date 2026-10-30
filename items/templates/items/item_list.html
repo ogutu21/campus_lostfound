@@ -60,14 +60,16 @@
 {% for item in page_obj %}
   <a class="ticket {{ item.kind }}" href="{% url 'items:detail' item.pk %}">
     <div class="stub">
-      <span class="stub-icon" aria-hidden="true">{% include "items/_icon.html" %}</span>
+      <span style="display:grid;place-items:center;width:2.75rem;height:2.75rem;border-radius:50%;background:rgba(255,255,255,.2)">
+        {% include "items/_icon.html" %}
+      </span>
       <span class="stub-kind">{{ item.get_kind_display }}</span>
       <span class="stub-no">No. {{ item.pk }}</span>
     </div>
     <div class="ticket-body">
       <h3>{{ item.title }}</h3>
-      <p>{{ item.location }}</p>
-      <p>{{ item.date_occurred|date:"j M Y" }}</p>
+      <p style="display:flex;align-items:center;gap:.4rem">{% include "items/_ui_icon.html" with name="pin" %}<span>{{ item.location }}</span></p>
+      <p style="display:flex;align-items:center;gap:.4rem">{% include "items/_ui_icon.html" with name="calendar" %}<span>{{ item.date_occurred|date:"j M Y" }}</span></p>
       <span class="chip">{{ item.get_category_display }}</span>
     </div>
     {% if item.image %}<img src="{{ item.image.url }}" alt="" loading="lazy">{% endif %}
