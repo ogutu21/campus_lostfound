@@ -5,10 +5,12 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .forms import ClaimForm, CommentForm, ItemForm, MessageForm, ReportForm
 from .models import Claim, Comment, Item, Message, Report, Thread
+from .notifications import notify
 
 
 def _place_suggestions():
@@ -78,6 +80,13 @@ def item_detail(request, pk):
             comment.item = item
             comment.author = request.user
             comment.save()
+            if item.poster_id != request.user.pk:
+                notify(
+                    item.poster,
+                    f'New comment on "{item.title}"',
+                    f"{request.user.get_full_name()} commented on your post:\n\n{comment.body}",
+                    reverse("items:detail", args=[item.pk]),
+                )
             return redirect("items:detail", pk=item.pk)
     else:
         form = CommentForm()
@@ -237,6 +246,13 @@ def claim_create(request, pk):
             claim.item = item
             claim.claimant = request.user
             claim.save()
+            notify(
+                item.poster,
+                f'Someone wants to claim "{item.title}"',
+                "A student says this item is theirs. Review their answer, "
+                "then approve or reject the claim.",
+                reverse("items:claims"),
+            )
             messages.success(request, "Your claim was sent. The finder will review your answer.")
             return redirect("items:detail", pk=item.pk)
     else:
@@ -292,12 +308,24 @@ def claim_decide(request, pk):
             ),
         )
         thread.save(update_fields=["updated_at"])
+        notify(
+            claim.claimant,
+            f'Your claim on "{claim.item.title}" was approved',
+            "The finder accepted your answer. Message them to arrange the handover.",
+            reverse("items:thread", args=[thread.pk]),
+        )
         messages.success(request, "Claim approved. You can now arrange the handover here.")
         return redirect("items:thread", pk=thread.pk)
 
     if action == "reject":
         claim.status = Claim.Status.REJECTED
         claim.save()
+        notify(
+            claim.claimant,
+            f'Your claim on "{claim.item.title}" was not approved',
+            "The finder couldn't confirm this item is yours from your answer.",
+            reverse("items:detail", args=[claim.item.pk]),
+        )
         messages.success(request, "Claim rejected.")
         return redirect("items:claims")
 
@@ -346,21 +374,36 @@ def thread_detail(request, pk):
     if request.user.pk not in (thread.starter_id, thread.item.poster_id):
         return HttpResponseForbidden("This conversation is private.")
 
+    other = thread.item.poster if request.user.pk == thread.starter_id else thread.starter
+
     if request.method == "POST":
         form = MessageForm(request.POST)
         if form.is_valid():
+            # If my earlier messages are still unread, the other person has
+            # already been emailed, so don't send another email.
+            already_notified = thread.messages.filter(
+                sender=request.user, is_read=False
+            ).exists()
+
             msg = form.save(commit=False)
             msg.thread = thread
             msg.sender = request.user
             msg.save()
             thread.save(update_fields=["updated_at"])
+
+            if not already_notified:
+                notify(
+                    other,
+                    f'New message about "{thread.item.title}"',
+                    f"{request.user.get_full_name()} sent you a private message.",
+                    reverse("items:thread", args=[thread.pk]),
+                )
             return redirect("items:thread", pk=thread.pk)
     else:
         form = MessageForm()
 
     thread.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
 
-    other = thread.item.poster if request.user.pk == thread.starter_id else thread.starter
     return render(request, "items/thread_detail.html", {
         "thread": thread,
         "chat": thread.messages.select_related("sender"),

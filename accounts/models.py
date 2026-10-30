@@ -36,6 +36,9 @@ class User(AbstractUser):
         "ID number", max_length=30, unique=True,
         help_text="Student or staff ID number",
     )
+    email_notifications = models.BooleanField(
+        "Email me about replies, messages and claims", default=True,
+    )
 
     USERNAME_FIELD = "id_number"
     REQUIRED_FIELDS = ["first_name", "last_name"]

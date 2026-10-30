@@ -66,7 +66,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "items.context_processors.unread_messages",   # NEW: unread badge
+                "items.context_processors.unread_messages",   # unread + pending badges
             ],
         },
     },
@@ -102,6 +102,27 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "items:list"
 LOGOUT_REDIRECT_URL = "items:list"
+
+
+# --- Email notifications ---
+# On the server, set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD (a Gmail app
+# password) and SITE_URL. Without them, emails print in the terminal instead.
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 10   # seconds; a slow mail server must not freeze a page
+
+if EMAIL_HOST_USER:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    DEFAULT_FROM_EMAIL = f"Campus Lost & Found <{EMAIL_HOST_USER}>"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    DEFAULT_FROM_EMAIL = "Campus Lost & Found <noreply@localhost>"
+
+# Used to build full links inside emails.
+SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:8000")
 
 
 # --- Internationalization ---
