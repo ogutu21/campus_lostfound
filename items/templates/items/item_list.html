@@ -1,18 +1,36 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="hero">
-  <div>
-    <h1>Lost something? Found something?</h1>
-    <p>Search the board. If you have something to report, post it so its owner can find it.</p>
+{% block hero %}
+<section class="hero-band">
+  <div class="hero-in">
+    <div>
+      <h1>Lost something? Found something?</h1>
+      <p>Search the board. If you have something to report, post it so its owner can find it.</p>
+      {% if user.is_authenticated %}
+        <a class="btn btn-ink" href="{% url 'items:create' %}">Post an item</a>
+      {% else %}
+        <a class="btn btn-ink" href="{% url 'accounts:login' %}?next={% url 'items:create' %}">Log in to post</a>
+      {% endif %}
+    </div>
+    <div class="hero-tag" aria-hidden="true">
+      <svg viewBox="0 0 120 190" xmlns="http://www.w3.org/2000/svg">
+        <path d="M60 0 V42" fill="none" stroke="#14213D" stroke-width="3"/>
+        <path d="M42 30 H78 L100 54 V176 a8 8 0 0 1 -8 8 H28 a8 8 0 0 1 -8 -8 V54 Z"
+              fill="#FFFFFF" stroke="#14213D" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="60" cy="48" r="7" fill="#F2A900" stroke="#14213D" stroke-width="4"/>
+        <text x="60" y="100" text-anchor="middle" font-size="22" font-weight="800"
+              fill="#14213D" style="font-family:var(--display)">Is this</text>
+        <text x="60" y="126" text-anchor="middle" font-size="22" font-weight="800"
+              fill="#14213D" style="font-family:var(--display)">yours?</text>
+        <line x1="34" y1="158" x2="86" y2="158" stroke="#14213D" stroke-width="2"
+              stroke-dasharray="5 4"/>
+      </svg>
+    </div>
   </div>
-  {% if user.is_authenticated %}
-    <a class="btn btn-primary" href="{% url 'items:create' %}">Post an item</a>
-  {% else %}
-    <a class="btn btn-primary" href="{% url 'accounts:login' %}?next={% url 'items:create' %}">Log in to post</a>
-  {% endif %}
-</div>
+</section>
+{% endblock %}
 
+{% block content %}
 <form class="finder" method="get" onchange="this.submit()">
   <div class="row">
     <label class="sr" for="q">Search items</label>
@@ -39,6 +57,7 @@
 {% for item in page_obj %}
   <a class="ticket {{ item.kind }}" href="{% url 'items:detail' item.pk %}">
     <div class="stub">
+      <span class="stub-icon" aria-hidden="true">{% include "items/_icon.html" %}</span>
       <span class="stub-kind">{{ item.get_kind_display }}</span>
       <span class="stub-no">No. {{ item.pk }}</span>
     </div>

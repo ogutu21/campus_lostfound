@@ -11,11 +11,11 @@
 
 <article class="sheet">
   <div class="sheet-head {{ item.kind }}">
-    <span>{{ item.get_kind_display }}</span>
+    <span><span aria-hidden="true">{% include "items/_icon.html" %}</span> {{ item.get_kind_display }}</span>
     <span class="no">No. {{ item.pk }}</span>
   </div>
   <div class="sheet-body">
-    {% if item.status == "RESOLVED" %}<span class="badge resolved">Resolved</span>{% endif %}
+    {% if item.status == "RESOLVED" %}<span class="stamp">Resolved</span>{% endif %}
     <h1>{{ item.title }}</h1>
     {% if item.image %}<img src="{{ item.image.url }}" alt="Photo of {{ item.title }}">{% endif %}
     {{ item.description|linebreaks }}

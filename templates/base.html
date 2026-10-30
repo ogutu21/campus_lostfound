@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14213D">
   <title>{% block title %}Campus Lost &amp; Found{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314213D'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%23F2A900' stroke-width='4'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
@@ -27,7 +28,7 @@
     html { -webkit-text-size-adjust: 100%; }
     body { margin: 0; background: var(--paper); color: var(--ink);
            font: 1.0625rem/1.55 var(--text); }
-    h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0 0 .5rem;
+    h1, h2, h3 { font-family: var(--display); line-height: 1.12; margin: 0 0 .5rem;
                  letter-spacing: -.01em; overflow-wrap: anywhere; }
     h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); font-weight: 800; letter-spacing: -.02em; }
     h2 { font-size: 1.5rem; font-weight: 700; }
@@ -57,7 +58,31 @@
     .who { color: rgba(255,255,255,.8); padding: 0 .5rem; }
     .unread { background: var(--amber); color: var(--ink); border-radius: 999px;
               padding: 0 .45rem; margin-left: .35rem; font-size: .8rem; font-weight: 700; }
-    @media (max-width: 30rem) { .who { display: none; } }
+    @media (max-width: 40rem) {
+      .who { display: none; }
+      .topbar nav a.desk { display: none; }   /* these links live in the bottom tab bar on phones */
+    }
+
+    /* ---- Hero: amber band with a hanging tag ---- */
+    .hero-band { background: var(--amber); color: var(--ink); overflow: hidden; }
+    .hero-in { max-width: 60rem; margin: 0 auto; padding: 1.75rem 1rem 1.75rem;
+               min-height: 10.5rem; display: grid; grid-template-columns: 1fr auto;
+               gap: 1rem 1.5rem; align-items: start; }
+    .hero-in h1 { font-size: clamp(2rem, 6.5vw, 3.4rem); max-width: 16ch; margin-bottom: .6rem; }
+    .hero-in p { margin: 0 0 1.1rem; max-width: 30rem; font-size: 1.1rem; }
+    .hero-tag { width: 5.5rem; margin-top: -1.75rem; transform-origin: 50% 0; }
+    .hero-tag svg { display: block; width: 100%; height: auto; }
+    @media (min-width: 40rem) { .hero-tag { width: 7rem; } }
+    @media (prefers-reduced-motion: no-preference) {
+      .hero-tag { animation: swing 2.2s cubic-bezier(.3,.6,.4,1) 1 both; }
+    }
+    @keyframes swing {
+      0%   { transform: rotate(16deg); }
+      30%  { transform: rotate(-10deg); }
+      55%  { transform: rotate(5deg); }
+      78%  { transform: rotate(-2deg); }
+      100% { transform: rotate(0); }
+    }
 
     /* ---- Page ---- */
     main { max-width: 46rem; margin: 1.5rem auto 3rem; padding: 0 1rem; }
@@ -81,6 +106,8 @@
           border-color: var(--amber); }
     .btn-primary:hover, main > form > button[type=submit]:hover { background: #DD9A00;
           border-color: #DD9A00; }
+    .btn-ink { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .btn-ink:hover { background: #22345E; border-color: #22345E; }
     input[type=text], input[type=password], input[type=email], input[type=date],
     input[type=search], select, textarea { width: 100%; max-width: 34rem;
           padding: .6rem .7rem; border: 2px solid var(--field); border-radius: 8px;
@@ -97,16 +124,12 @@
     .card form { margin: .5rem 0 0; }
     .badge { display: inline-block; padding: .1rem .6rem; border-radius: 999px;
              font-size: .85rem; font-weight: 700; color: #fff; }
-    .badge.resolved { background: #5B6577; }
     .bubble { max-width: 80%; padding: .6rem .9rem; margin-bottom: .6rem;
               background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
     .bubble.mine { margin-left: auto; background: #DCE9F7; border-color: #B8CDE6; }
 
-    /* ---- Home page ---- */
-    .hero { display: flex; flex-wrap: wrap; align-items: flex-end;
-            justify-content: space-between; gap: 1rem; }
-    .hero p { margin: .25rem 0 0; color: var(--ink-soft); max-width: 30rem; }
-    .finder { display: grid; gap: .75rem; margin: 1.25rem 0 1.5rem; }
+    /* ---- Home page: search ---- */
+    .finder { display: grid; gap: .75rem; margin: 0 0 1.5rem; }
     .finder .row { display: flex; flex-wrap: wrap; gap: .6rem; }
     .finder input[type=search] { flex: 1 1 14rem; max-width: none; }
     .finder select { flex: 1 1 11rem; max-width: none; }
@@ -131,11 +154,12 @@
     .ticket::before { top: -.5rem; }
     .ticket::after { bottom: -.5rem; }
     .stub { display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: .25rem; padding: .75rem .4rem; color: #fff;
+            justify-content: center; gap: .2rem; padding: .75rem .4rem; color: #fff;
             text-align: center; border-right: 2px dashed rgba(255,255,255,.75);
             border-radius: 11px 0 0 11px; }
     .ticket.LOST .stub { background: var(--lost); }
     .ticket.FOUND .stub { background: var(--found); }
+    .stub-icon { font-size: 1.6rem; line-height: 1; }
     .stub-kind { font: 800 1.05rem/1 var(--display); }
     .stub-no { font-size: .8rem; }
     .ticket-body { min-width: 0; padding: .8rem 1rem; }
@@ -159,13 +183,16 @@
              border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; }
     .sheet-head { display: flex; align-items: center; justify-content: space-between;
                   gap: 1rem; padding: .65rem 1rem; color: #fff;
-                  font: 800 1.05rem/1 var(--display); }
+                  font: 800 1.1rem/1 var(--display); }
     .sheet-head.LOST { background: var(--lost); }
     .sheet-head.FOUND { background: var(--found); }
     .sheet-head .no { font: 400 .9rem var(--text); }
     .sheet-body { padding: 1.1rem 1.1rem 1.25rem; }
     .sheet-body img { display: block; max-width: 100%; height: auto;
                       border-radius: 8px; margin: .5rem 0 1rem; }
+    .stamp { display: inline-block; margin: 0 0 .75rem; padding: .2rem .8rem;
+             border: 4px double var(--found); border-radius: 6px; color: var(--found);
+             font: 800 1.2rem/1.2 var(--display); transform: rotate(-4deg); }
     .facts { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem;
              margin: 1rem 0; }
     .facts dt { color: var(--ink-soft); }
@@ -173,18 +200,39 @@
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
                margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
     .actions form { margin: 0; }
+
+    /* ---- Bottom tab bar (phones, logged-in users) ---- */
+    .tabbar { display: none; }
+    @media (max-width: 40rem) {
+      .has-tabs { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom)); }
+      .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+                position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+                background: var(--surface); border-top: 1px solid var(--line);
+                padding-bottom: env(safe-area-inset-bottom); }
+      .tab { position: relative; display: flex; flex-direction: column;
+             align-items: center; justify-content: center; gap: .15rem;
+             min-height: 3.75rem; border-top: 3px solid transparent;
+             color: var(--ink-soft); font-size: .8rem; font-weight: 700;
+             text-decoration: none; }
+      .tab svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor;
+                 stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .tab[aria-current=page] { color: var(--ink); border-top-color: var(--amber); }
+      .tab-post svg { width: 2.2rem; height: 2.2rem; padding: .35rem;
+                      border-radius: 999px; background: var(--amber); color: var(--ink); }
+      .tab .unread { position: absolute; top: .35rem; left: calc(50% + .35rem); margin: 0; }
+    }
   </style>
 </head>
-<body>
+<body class="{% if user.is_authenticated %}has-tabs{% endif %}">
   <header class="topbar">
     <div class="bar">
       <a class="brand" href="{% url 'items:list' %}">Campus Lost &amp; Found</a>
       <nav>
         {% if user.is_authenticated %}
           <span class="who">Hi, {{ user.first_name }}</span>
-          <a href="{% url 'items:create' %}">Post an item</a>
-          <a href="{% url 'items:claims' %}">Claims{% if pending_claims %}<span class="unread">{{ pending_claims }}</span>{% endif %}</a>
-          <a href="{% url 'items:inbox' %}">Messages{% if unread_count %}<span class="unread">{{ unread_count }}</span>{% endif %}</a>
+          <a class="desk" href="{% url 'items:create' %}">Post an item</a>
+          <a class="desk" href="{% url 'items:claims' %}">Claims{% if pending_claims %}<span class="unread">{{ pending_claims }}</span>{% endif %}</a>
+          <a class="desk" href="{% url 'items:inbox' %}">Messages{% if unread_count %}<span class="unread">{{ unread_count }}</span>{% endif %}</a>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
             <button type="submit" class="linklike">Log out</button>
@@ -196,6 +244,8 @@
       </nav>
     </div>
   </header>
+
+  {% block hero %}{% endblock %}
 
   <main>
     {% if messages %}
@@ -209,5 +259,30 @@
   <footer>
     Handing an item over? Meet somewhere busy on campus, like the security office.
   </footer>
+
+  {% if user.is_authenticated %}
+  {% with current=request.resolver_match.url_name %}
+  <nav class="tabbar" aria-label="Main">
+    <a class="tab" href="{% url 'items:list' %}" {% if current == "list" or current == "detail" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+      <span>Browse</span>
+    </a>
+    <a class="tab tab-post" href="{% url 'items:create' %}" {% if current == "create" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span>Post</span>
+    </a>
+    <a class="tab" href="{% url 'items:claims' %}" {% if current == "claims" or current == "claim" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg>
+      <span>Claims</span>
+      {% if pending_claims %}<span class="unread">{{ pending_claims }}</span>{% endif %}
+    </a>
+    <a class="tab" href="{% url 'items:inbox' %}" {% if current == "inbox" or current == "thread" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-6 4V5z"/></svg>
+      <span>Messages</span>
+      {% if unread_count %}<span class="unread">{{ unread_count }}</span>{% endif %}
+    </a>
+  </nav>
+  {% endwith %}
+  {% endif %}
 </body>
 </html>
