@@ -3,68 +3,74 @@
 {% block title %}{{ item.title }}{% endblock %}
 
 {% block content %}
-<p><a href="{% url 'items:list' %}">&larr; Back to all items</a></p>
+<p><a href="{% url 'items:list' %}">Back to all items</a></p>
 
 {% if item.is_hidden %}
-  <div style="background:#fdecea;border-left:4px solid #c0392b;padding:10px 14px;margin-bottom:14px;border-radius:4px">
-    This post is hidden by a moderator. Only you and staff can see it.
-  </div>
+  <div class="notice">This post is hidden by a moderator. Only you and staff can see it.</div>
 {% endif %}
 
-<div class="card" style="display:block">
-  <span class="badge {{ item.kind }}">{{ item.get_kind_display }}</span>
-  {% if item.status == "RESOLVED" %}<span class="badge" style="background:#777">Resolved</span>{% endif %}
-  <h2>{{ item.title }}</h2>
-  {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.title }}" style="width:100%;max-width:500px;height:auto">{% endif %}
-  <p>{{ item.description|linebreaks }}</p>
-  <p class="meta">
-    <strong>Category:</strong> {{ item.get_category_display }}<br>
-    <strong>Location:</strong> {{ item.location }}<br>
-    <strong>Date:</strong> {{ item.date_occurred }}<br>
-    <strong>Posted by:</strong> {{ item.poster.get_full_name }} on {{ item.created_at|date:"j M Y" }}
-  </p>
+<article class="sheet">
+  <div class="sheet-head {{ item.kind }}">
+    <span>{{ item.get_kind_display }}</span>
+    <span class="no">No. {{ item.pk }}</span>
+  </div>
+  <div class="sheet-body">
+    {% if item.status == "RESOLVED" %}<span class="badge resolved">Resolved</span>{% endif %}
+    <h1>{{ item.title }}</h1>
+    {% if item.image %}<img src="{{ item.image.url }}" alt="Photo of {{ item.title }}">{% endif %}
+    {{ item.description|linebreaks }}
 
-  {% if user == item.poster %}
-    <hr>
-    {% if item.kind == "FOUND" and item.verification_question %}
-      <p class="meta"><strong>Your verification question (only you can see this):</strong>
-        {{ item.verification_question }}</p>
-    {% endif %}
-    <a href="{% url 'items:edit' item.pk %}">Edit</a> |
-    <a href="{% url 'items:delete' item.pk %}">Delete</a> |
-    <a href="{% url 'items:claims' %}">Claims on your items</a>
-    {% if item.status == "ACTIVE" %}
-      <form method="post" action="{% url 'items:resolve' item.pk %}" style="display:inline">
-        {% csrf_token %}
-        <button type="submit">Mark as resolved</button>
-      </form>
-    {% endif %}
-  {% elif user.is_authenticated %}
-    <hr>
-    {% if user_claim %}
-      <p><strong>Your claim:</strong> {{ user_claim.get_status_display }}</p>
-    {% elif item.kind == "FOUND" and item.status == "ACTIVE" %}
-      <a href="{% url 'items:claim' item.pk %}"><strong>This is mine</strong></a>
-      &nbsp;|&nbsp;
-    {% endif %}
-    <form method="post" action="{% url 'items:thread_start' item.pk %}" style="display:inline">
-      {% csrf_token %}
-      <button type="submit">Message {{ item.poster.first_name }} privately</button>
-    </form>
-    &nbsp;<a class="meta" href="{% url 'items:report' item.pk %}">Report this post</a>
-  {% else %}
-    <hr>
-    <p class="meta"><a href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a> to message the poster privately{% if item.kind == "FOUND" %} or claim this item{% endif %}.</p>
-  {% endif %}
-</div>
+    <dl class="facts">
+      <dt>Category</dt><dd>{{ item.get_category_display }}</dd>
+      <dt>Location</dt><dd>{{ item.location }}</dd>
+      <dt>Date</dt><dd>{{ item.date_occurred|date:"j M Y" }}</dd>
+      <dt>Posted by</dt><dd>{{ item.poster.get_full_name }}, {{ item.created_at|date:"j M Y" }}</dd>
+    </dl>
 
-<h3>Conversation ({{ comments|length }})</h3>
+    {% if user == item.poster %}
+      {% if item.kind == "FOUND" and item.verification_question %}
+        <p class="meta"><strong>Your verification question (only you can see this):</strong>
+          {{ item.verification_question }}</p>
+      {% endif %}
+      <div class="actions">
+        {% if item.status == "ACTIVE" %}
+          <form method="post" action="{% url 'items:resolve' item.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary">Mark as resolved</button>
+          </form>
+        {% endif %}
+        <a class="btn" href="{% url 'items:edit' item.pk %}">Edit</a>
+        <a class="btn" href="{% url 'items:claims' %}">Claims on your items</a>
+        <a class="btn" href="{% url 'items:delete' item.pk %}">Delete</a>
+      </div>
+    {% elif user.is_authenticated %}
+      <div class="actions">
+        {% if user_claim %}
+          <p style="margin:0"><strong>Your claim:</strong> {{ user_claim.get_status_display }}</p>
+        {% elif item.kind == "FOUND" and item.status == "ACTIVE" %}
+          <a class="btn btn-primary" href="{% url 'items:claim' item.pk %}">This is mine</a>
+        {% endif %}
+        <form method="post" action="{% url 'items:thread_start' item.pk %}">
+          {% csrf_token %}
+          <button type="submit">Message {{ item.poster.first_name }} privately</button>
+        </form>
+        <a class="meta" href="{% url 'items:report' item.pk %}">Report this post</a>
+      </div>
+    {% else %}
+      <div class="actions">
+        <a class="btn btn-primary" href="{% url 'accounts:login' %}?next={{ request.path }}">Log in to message the poster{% if item.kind == "FOUND" %} or claim this item{% endif %}</a>
+      </div>
+    {% endif %}
+  </div>
+</article>
+
+<h2>Comments ({{ comments|length }})</h2>
 
 {% for c in comments %}
-  <div class="card" style="display:block">
+  <div class="card">
     <strong>{{ c.author.get_full_name }}</strong>
     <span class="meta">{{ c.created_at|date:"j M Y, H:i" }}</span>
-    <p>{{ c.body|linebreaksbr }}</p>
+    <p style="margin:.4rem 0 0">{{ c.body|linebreaksbr }}</p>
     {% if user == c.author or user == item.poster %}
       <form method="post" action="{% url 'items:comment_delete' c.pk %}">
         {% csrf_token %}
