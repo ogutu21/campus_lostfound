@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 
 from .models import Claim, Comment, Item, Message, Report
 
@@ -11,9 +12,28 @@ class ItemForm(forms.ModelForm):
         fields = ["kind", "title", "description", "category",
                   "location", "date_occurred", "image", "verification_question"]
         widgets = {
+            "kind": forms.RadioSelect,
+            "title": forms.TextInput(attrs={"placeholder": "e.g. Black phone with a cracked case"}),
             "date_occurred": forms.DateInput(attrs={"type": "date"}),
             "description": forms.Textarea(attrs={"rows": 4}),
+            "image": forms.ClearableFileInput(attrs={"accept": "image/*"}),
+            "location": forms.TextInput(attrs={"list": "places", "autocomplete": "off"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        today = timezone.localdate()
+        # The date picker won't let people choose a day in the future.
+        self.fields["date_occurred"].widget.attrs["max"] = today.isoformat()
+        # New posts start with today's date filled in.
+        if not self.instance.pk:
+            self.fields["date_occurred"].initial = today
+
+    def clean_date_occurred(self):
+        date = self.cleaned_data["date_occurred"]
+        if date > timezone.localdate():
+            raise forms.ValidationError("The date can't be in the future.")
+        return date
 
     def clean_image(self):
         image = self.cleaned_data.get("image")

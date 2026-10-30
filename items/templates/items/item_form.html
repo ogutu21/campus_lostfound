@@ -3,11 +3,128 @@
 {% block title %}{{ heading }}{% endblock %}
 
 {% block content %}
-<h2>{{ heading }}</h2>
-<form method="post" enctype="multipart/form-data">
+<style>
+  .field { margin-bottom: 1.2rem; }
+  .field > label, .field > .lbl { display: block; margin-bottom: .3rem; font-weight: 700; }
+  .hint { margin: .3rem 0 0; color: var(--ink-soft); font-size: .9rem; }
+  #preview img { display: block; max-width: 100%; max-height: 14rem; margin-top: .6rem;
+                 border-radius: 8px; }
+  #preview:empty { display: none; }
+  .two { display: grid; grid-template-columns: 1fr; gap: 0 1rem; }
+  @media (min-width: 36rem) { .two { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<h1>{{ heading }}</h1>
+
+<form method="post" enctype="multipart/form-data" id="postform">
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save</button>
-  <a href="{% url 'items:list' %}">Cancel</a>
+  {{ form.non_field_errors }}
+
+  <div class="field">
+    <div class="lbl" id="kind-label">What happened?</div>
+    <div class="pills" role="radiogroup" aria-labelledby="kind-label">
+      {% for radio in form.kind %}{% if radio.data.value %}
+        <label>
+          <input type="radio" name="{{ radio.data.name }}" value="{{ radio.data.value }}"
+                 {% if radio.data.selected %}checked{% endif %} required>
+          <span>{% if radio.data.value == "LOST" %}I lost something{% else %}I found something{% endif %}</span>
+        </label>
+      {% endif %}{% endfor %}
+    </div>
+    {{ form.kind.errors }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.title.id_for_label }}">What is it?</label>
+    {{ form.title }}
+    {{ form.title.errors }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.category.id_for_label }}">Type of item</label>
+    {{ form.category }}
+    {{ form.category.errors }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.image.id_for_label }}">Photo (optional)</label>
+    {{ form.image }}
+    <div id="preview" aria-live="polite"></div>
+    <p class="hint">A clear photo helps a lot. Up to 5 MB.</p>
+    {{ form.image.errors }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.description.id_for_label }}">Details</label>
+    {{ form.description }}
+    <p class="hint">Colour, brand and marks. Don't write anything only the owner would know.</p>
+    {{ form.description.errors }}
+  </div>
+
+  <div class="two">
+    <div class="field">
+      <label for="{{ form.location.id_for_label }}">Where</label>
+      {{ form.location }}
+      <datalist id="places">
+        {% for p in place_suggestions %}<option value="{{ p }}">{% endfor %}
+      </datalist>
+      {{ form.location.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ form.date_occurred.id_for_label }}">When</label>
+      {{ form.date_occurred }}
+      {{ form.date_occurred.errors }}
+    </div>
+  </div>
+
+  <div class="field" id="vq-wrap">
+    <label for="{{ form.verification_question.id_for_label }}">Verification question</label>
+    {{ form.verification_question }}
+    <p class="hint">Ask something only the real owner could answer, like what's on the lock screen. Only you will see it, and people must answer it before you decide on their claim.</p>
+    {{ form.verification_question.errors }}
+  </div>
+
+  <button type="submit">{{ submit_label }}</button>
+  <a href="{% url 'items:list' %}" style="margin-left:.75rem">Cancel</a>
 </form>
+
+<script>
+(function () {
+  var form = document.getElementById('postform');
+  var wrap = document.getElementById('vq-wrap');
+  var question = document.getElementById('{{ form.verification_question.id_for_label }}');
+  var file = document.getElementById('{{ form.image.id_for_label }}');
+  var preview = document.getElementById('preview');
+
+  // The verification question only matters for found items.
+  function sync() {
+    var chosen = form.querySelector('input[name="kind"]:checked');
+    var found = !!chosen && chosen.value === 'FOUND';
+    wrap.hidden = !found;
+    question.required = found;
+  }
+  form.addEventListener('change', function (e) {
+    if (e.target.name === 'kind') sync();
+  });
+  sync();
+
+  // Show the chosen photo straight away, and catch files that are too big.
+  if (file) {
+    file.addEventListener('change', function () {
+      var f = file.files[0];
+      preview.textContent = '';
+      if (!f) return;
+      if (f.size > 5 * 1024 * 1024) {
+        preview.textContent = 'That photo is over 5 MB. Please pick a smaller one.';
+        file.value = '';
+        return;
+      }
+      var img = document.createElement('img');
+      img.alt = 'Preview of the chosen photo';
+      img.src = URL.createObjectURL(f);
+      preview.appendChild(img);
+    });
+  }
+})();
+</script>
 {% endblock %}

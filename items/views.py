@@ -11,6 +11,16 @@ from .forms import ClaimForm, CommentForm, ItemForm, MessageForm, ReportForm
 from .models import Claim, Comment, Item, Message, Report, Thread
 
 
+def _place_suggestions():
+    """The ten most-used locations, offered as suggestions in the post form."""
+    rows = (
+        Item.objects.values("location")
+        .annotate(n=Count("id"))
+        .order_by("-n", "location")[:10]
+    )
+    return [r["location"] for r in rows]
+
+
 def item_list(request):
     items = (
         Item.objects.filter(status=Item.Status.ACTIVE, is_hidden=False)
@@ -89,11 +99,29 @@ def item_create(request):
             item = form.save(commit=False)
             item.poster = request.user
             item.save()
-            messages.success(request, "Your post has been published.")
+            if item.kind == Item.Kind.FOUND:
+                messages.success(
+                    request,
+                    f"Posted as No. {item.pk}. When someone claims it, you'll see it under Claims.",
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Posted as No. {item.pk}. If someone finds it, they'll message you.",
+                )
             return redirect("items:detail", pk=item.pk)
     else:
-        form = ItemForm()
-    return render(request, "items/item_form.html", {"form": form, "heading": "Post an item"})
+        # The home page buttons send ?kind=LOST or ?kind=FOUND.
+        kind = request.GET.get("kind", "")
+        initial = {"kind": kind} if kind in Item.Kind.values else None
+        form = ItemForm(initial=initial)
+
+    return render(request, "items/item_form.html", {
+        "form": form,
+        "heading": "Post an item",
+        "submit_label": "Publish post",
+        "place_suggestions": _place_suggestions(),
+    })
 
 
 @login_required
@@ -105,11 +133,16 @@ def item_edit(request, pk):
         form = ItemForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
             form.save()
-            messages.success(request, "Post updated.")
+            messages.success(request, "Changes saved.")
             return redirect("items:detail", pk=item.pk)
     else:
         form = ItemForm(instance=item)
-    return render(request, "items/item_form.html", {"form": form, "heading": "Edit post"})
+    return render(request, "items/item_form.html", {
+        "form": form,
+        "heading": "Edit post",
+        "submit_label": "Save changes",
+        "place_suggestions": _place_suggestions(),
+    })
 
 
 @login_required
