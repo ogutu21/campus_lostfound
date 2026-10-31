@@ -223,24 +223,25 @@
     }
   </style>
 </head>
-<body class="{% if user.is_authenticated %}has-tabs{% endif %}">
+<body class="{% if user.is_authenticated and user.id_number %}has-tabs{% endif %}">
   <header class="topbar">
     <div class="bar">
       <a class="brand" href="{% url 'items:list' %}">Campus Lost &amp; Found</a>
       <nav>
         {% if user.is_authenticated %}
           <span class="who">Hi, {{ user.first_name }}</span>
-          <a class="desk" href="{% url 'items:create' %}">Post an item</a>
-          <a class="desk" href="{% url 'items:claims' %}">Claims{% if pending_claims %}<span class="unread">{{ pending_claims }}</span>{% endif %}</a>
-          <a class="desk" href="{% url 'items:inbox' %}">Messages{% if unread_count %}<span class="unread">{{ unread_count }}</span>{% endif %}</a>
-          <a href="{% url 'accounts:settings' %}">Settings</a>
+          {% if user.id_number %}
+            <a class="desk" href="{% url 'items:create' %}">Post an item</a>
+            <a class="desk" href="{% url 'items:claims' %}">Claims{% if pending_claims %}<span class="unread">{{ pending_claims }}</span>{% endif %}</a>
+            <a class="desk" href="{% url 'items:inbox' %}">Messages{% if unread_count %}<span class="unread">{{ unread_count }}</span>{% endif %}</a>
+            <a href="{% url 'accounts:settings' %}">Settings</a>
+          {% endif %}
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
             <button type="submit" class="linklike">Log out</button>
           </form>
         {% else %}
-          <a href="{% url 'accounts:login' %}">Log in</a>
-          <a href="{% url 'accounts:register' %}">Register</a>
+          <a href="{% url 'accounts:login' %}">Sign in</a>
         {% endif %}
       </nav>
     </div>
@@ -261,7 +262,7 @@
     Handing an item over? Meet somewhere busy on campus, like the security office.
   </footer>
 
-  {% if user.is_authenticated %}
+  {% if user.is_authenticated and user.id_number %}
   {% with current=request.resolver_match.url_name %}
   <nav class="tabbar" aria-label="Main">
     <a class="tab" href="{% url 'items:list' %}" {% if current == "list" or current == "detail" %}aria-current="page"{% endif %}>

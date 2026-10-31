@@ -7,8 +7,7 @@ class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def get_by_natural_key(self, id_number):
-        # Django's login calls this to find the user.
-        # iexact = case-insensitive exact match.
+        # Used by the admin login. iexact = case-insensitive exact match.
         return self.get(id_number__iexact=id_number.strip())
 
     def _create_user(self, id_number, password, **extra_fields):
@@ -32,12 +31,20 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     username = None
+    # Empty until the person proves their registration number after
+    # their first Google sign-in. NULL (not "") so many users can be
+    # unverified at once without breaking the unique rule.
     id_number = models.CharField(
-        "ID number", max_length=30, unique=True,
-        help_text="Student or staff ID number",
+        "Registration number", max_length=30, unique=True,
+        null=True, blank=True,
+        help_text="Student registration or staff ID number",
     )
     email_notifications = models.BooleanField(
         "Email me about replies, messages and claims", default=True,
+    )
+    verify_attempts = models.PositiveSmallIntegerField(
+        "Wrong registration numbers entered", default=0,
+        help_text="Locked out at 5. Set back to 0 to unlock.",
     )
 
     USERNAME_FIELD = "id_number"
@@ -46,9 +53,33 @@ class User(AbstractUser):
     objects = UserManager()
 
     def save(self, *args, **kwargs):
-        # Whatever path created this user (form, admin, shell), store it uppercase.
-        self.id_number = self.id_number.strip().upper()
+        # Store the number uppercase; store "no number" as NULL.
+        if self.id_number:
+            self.id_number = self.id_number.strip().upper()
+        else:
+            self.id_number = None
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.get_full_name()} ({self.id_number})"
+        return f"{self.get_full_name()} ({self.id_number or self.email})"
+
+
+class RosterEntry(models.Model):
+    """One valid registration number. Anyone not on the roster cannot join."""
+    number = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=120, blank=True)
+    used_by = models.OneToOneField(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="roster_entry",
+    )
+
+    class Meta:
+        ordering = ["number"]
+        verbose_name_plural = "roster entries"
+
+    def save(self, *args, **kwargs):
+        self.number = self.number.strip().upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.number

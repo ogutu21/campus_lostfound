@@ -5,8 +5,9 @@
 {% block content %}
 <h1>Settings</h1>
 <p class="meta">
-  We email you when someone comments on your post, claims your found item, or
-  messages you. The first emails may land in your spam folder, so mark them as not spam.
+  We email <strong>{{ user.email }}</strong> (your Google address) when someone
+  comments on your post, claims your found item, or messages you. The first
+  emails may land in spam, so mark them as not spam.
 </p>
 
 <form method="post">

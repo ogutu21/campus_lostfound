@@ -1,38 +1,40 @@
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 
-from .models import User
-
-
-class RegistrationForm(UserCreationForm):
-    class Meta(UserCreationForm.Meta):
-        model = User
-        fields = ("id_number", "first_name", "last_name", "email")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["first_name"].required = True
-        self.fields["last_name"].required = True
-        self.fields["email"].required = True
-
-    def clean_id_number(self):
-        # Runs automatically for the id_number field.
-        return self.cleaned_data["id_number"].strip().upper()
+from .models import RosterEntry, User
 
 
-class LoginForm(AuthenticationForm):
-    def clean_username(self):
-        # The login field is always called "username" inside this form,
-        # even though it holds the ID number.
-        return self.cleaned_data["username"].strip().upper()
+class VerifyForm(forms.Form):
+    registration_number = forms.CharField(
+        label="Student registration number", max_length=30,
+        widget=forms.TextInput(attrs={"autocomplete": "off", "autofocus": True}),
+    )
+
+    def clean_registration_number(self):
+        number = self.cleaned_data["registration_number"].strip().upper()
+
+        entry = RosterEntry.objects.filter(number=number).first()
+        if entry is None:
+            raise forms.ValidationError(
+                "We couldn't find that number. Check it and try again."
+            )
+        if entry.used_by_id or User.objects.filter(id_number__iexact=number).exists():
+            raise forms.ValidationError(
+                "That number is already linked to an account. If it's yours, "
+                "ask the site admin for help."
+            )
+        self.entry = entry   # the view uses this
+        return number
 
 
 class SettingsForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("email", "email_notifications")
-        labels = {"email": "Email address"}
+        fields = ("email_notifications",)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["email"].required = True
+
+class AdminUserCreationForm(UserCreationForm):
+    """Only used by the admin's 'add user' page."""
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("id_number", "first_name", "last_name", "email")

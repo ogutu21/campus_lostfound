@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Log in{% endblock %}
+{% block title %}Sign in{% endblock %}
 
 {% block content %}
-<h2>Log in</h2>
-<form method="post">
+<h1>Sign in</h1>
+<p>Use your Google account. The first time, you'll also enter your student
+registration number so we know you belong to the campus.</p>
+
+<form method="post" action="{% url 'google_login' %}">
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Log in</button>
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <button type="submit" class="btn-ink">Continue with Google</button>
 </form>
-<p>No account yet? <a href="{% url 'accounts:register' %}">Register</a></p>
 {% endblock %}
