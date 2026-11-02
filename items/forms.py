@@ -1,9 +1,12 @@
 from django import forms
 from django.utils import timezone
+from PIL import Image
 
+from .images import shrink_image
 from .models import Claim, Comment, Item, Message, Report
 
-MAX_IMAGE_MB = 5
+# Phone photos are often 5 to 12 MB. We accept big ones, then shrink them.
+MAX_IMAGE_MB = 15
 
 
 class ItemForm(forms.ModelForm):
@@ -44,6 +47,10 @@ class ItemForm(forms.ModelForm):
                 raise forms.ValidationError(f"Photo must be smaller than {MAX_IMAGE_MB} MB.")
             if image.content_type not in ("image/jpeg", "image/png", "image/webp"):
                 raise forms.ValidationError("Please upload a JPG, PNG or WebP image.")
+            try:
+                image = shrink_image(image)
+            except (OSError, ValueError, Image.DecompressionBombError):
+                raise forms.ValidationError("We couldn't read that photo. Please try another one.")
         return image
 
     def clean(self):

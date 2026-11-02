@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import dashboard, views
 
 app_name = "items"
 
@@ -19,4 +19,9 @@ urlpatterns = [
     path("claims/<int:pk>/decide/", views.claim_decide, name="claim_decide"),
     path("messages/", views.inbox, name="inbox"),
     path("messages/<int:pk>/", views.thread_detail, name="thread"),
+
+    # Staff dashboard
+    path("dashboard/", dashboard.dashboard, name="dashboard"),
+    path("dashboard/reports/<int:pk>/", dashboard.report_resolve, name="report_resolve"),
+    path("dashboard/users/<int:pk>/unlock/", dashboard.unlock_user, name="unlock_user"),
 ]

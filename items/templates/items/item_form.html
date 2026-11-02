@@ -50,7 +50,7 @@
     <label for="{{ form.image.id_for_label }}">Photo (optional)</label>
     {{ form.image }}
     <div id="preview" aria-live="polite"></div>
-    <p class="hint">A clear photo helps a lot. Up to 5 MB.</p>
+    <p class="hint">A clear photo helps a lot. Up to 15 MB. We shrink it automatically so the page loads fast, and remove any hidden location data.</p>
     {{ form.image.errors }}
   </div>
 
@@ -114,8 +114,8 @@
       var f = file.files[0];
       preview.textContent = '';
       if (!f) return;
-      if (f.size > 5 * 1024 * 1024) {
-        preview.textContent = 'That photo is over 5 MB. Please pick a smaller one.';
+      if (f.size > 15 * 1024 * 1024) {
+        preview.textContent = 'That photo is over 15 MB. Please pick a smaller one.';
         file.value = '';
         return;
       }

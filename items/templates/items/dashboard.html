@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+           gap: .7rem; margin: 1rem 0 1.75rem; }
+  .tile { background: var(--surface); border: 1px solid var(--line);
+          border-radius: 12px; padding: .8rem .9rem; }
+  .tile b { display: block; font: 800 1.8rem/1.1 var(--display); }
+  .tile span { color: var(--ink-soft); font-size: .9rem; }
+  .tile.alert { border-color: var(--lost); }
+  .row-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+  .row-actions form { margin: 0; }
+</style>
+
+<h1>Dashboard</h1>
+<p class="meta">For staff only. For anything not shown here, use the
+<a href="{% url 'admin:index' %}">admin site</a>.</p>
+
+<div class="tiles">
+  <div class="tile"><b>{{ stats.members }}</b><span>Members</span></div>
+  <div class="tile"><b>{{ stats.verified }}</b><span>With a registration number</span></div>
+  <div class="tile"><b>{{ stats.lost }}</b><span>Lost, still looking</span></div>
+  <div class="tile"><b>{{ stats.found }}</b><span>Found, waiting</span></div>
+  <div class="tile"><b>{{ stats.resolved }}</b><span>Resolved</span></div>
+  <div class="tile"><b>{{ stats.new_week }}</b><span>New this week</span></div>
+  <div class="tile"><b>{{ stats.claims_waiting }}</b><span>Claims waiting</span></div>
+  <div class="tile"><b>{{ stats.hidden }}</b><span>Hidden posts</span></div>
+  <div class="tile"><b>{{ stats.roster_used }} / {{ stats.roster_total }}</b><span>Roster numbers used</span></div>
+  <div class="tile {% if stats.reports_open %}alert{% endif %}"><b>{{ stats.reports_open }}</b><span>Open reports</span></div>
+</div>
+
+<h2>Open reports</h2>
+{% for r in reports %}
+  <div class="card">
+    <strong><a href="{% url 'items:detail' r.item.pk %}">{{ r.item.title }}</a></strong>
+    {% if r.item.is_hidden %}<span class="badge" style="background:#4A5670">Hidden</span>{% endif %}
+    <div class="meta">
+      {{ r.get_reason_display }} · reported by {{ r.reporter.get_full_name }} ·
+      posted by {{ r.item.poster.get_full_name }} · {{ r.created_at|timesince }} ago
+    </div>
+    {% if r.details %}<p>{{ r.details }}</p>{% endif %}
+    <div class="row-actions">
+      {% if not r.item.is_hidden %}
+      <form method="post" action="{% url 'items:report_resolve' r.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="hide">
+        <button type="submit">Hide this post</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{% url 'items:report_resolve' r.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="dismiss">
+        <button type="submit">Dismiss report</button>
+      </form>
+    </div>
+  </div>
+{% empty %}
+  <p class="meta">Nothing to review. 🎉</p>
+{% endfor %}
+{% if stats.reports_open > 20 %}
+  <p class="meta">Showing the first 20 of {{ stats.reports_open }}. The rest are in the admin site.</p>
+{% endif %}
+
+<h2>Locked-out members</h2>
+{% for u in locked %}
+  <div class="card">
+    <strong>{{ u.get_full_name }}</strong> <span class="meta">{{ u.email }}</span>
+    <div class="meta">Entered too many wrong registration numbers.</div>
+    <div class="row-actions">
+      <form method="post" action="{% url 'items:unlock_user' u.pk %}">
+        {% csrf_token %}
+        <button type="submit">Unlock</button>
+      </form>
+    </div>
+  </div>
+{% empty %}
+  <p class="meta">Nobody is locked out.</p>
+{% endfor %}
+{% endblock %}
