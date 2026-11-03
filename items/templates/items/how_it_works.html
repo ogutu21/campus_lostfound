@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}How it works{% endblock %}
+
+{% block content %}
+<style>
+  .lead { font-size: 1.15rem; max-width: 36rem; margin: 0 0 1.5rem; }
+  .path { background: var(--surface); border: 1px solid var(--line);
+          border-radius: 12px; overflow: hidden; margin: 0 0 1.25rem; }
+  .path-head { padding: .65rem 1rem; color: #fff; font: 800 1.15rem/1.2 var(--display); }
+  .path-head.lost { background: var(--lost); }
+  .path-head.found { background: var(--found); }
+  .path-head.claim { background: var(--ink); }
+  .steps { list-style: none; counter-reset: step; margin: 0; padding: 1rem 1.1rem 1.1rem; }
+  .steps li { counter-increment: step; position: relative; padding: 0 0 .9rem 2.6rem; }
+  .steps li:last-child { padding-bottom: 0; }
+  .steps li::before { content: counter(step); position: absolute; left: 0; top: .05rem;
+        width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--amber);
+        color: var(--ink); font: 800 1rem/1.9rem var(--display); text-align: center; }
+  .steps strong { display: block; }
+  .safety { background: #FFF6DB; border: 1px solid #E8CF7A; border-left: 6px solid var(--amber);
+            border-radius: 8px; padding: .9rem 1.1rem; margin: 1.5rem 0; }
+  .safety h2 { font-size: 1.25rem; }
+  .safety ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+  .safety li { margin-bottom: .3rem; }
+  .faq details { background: var(--surface); border: 1px solid var(--line);
+                 border-radius: 10px; margin-bottom: .6rem; }
+  .faq summary { cursor: pointer; padding: .8rem 1rem; font-weight: 700; }
+  .faq details[open] summary { border-bottom: 1px solid var(--line); }
+  .faq details p { margin: 0; padding: .8rem 1rem; }
+  .cta { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1.5rem 0 0; }
+</style>
+
+<h1>How it works</h1>
+<p class="lead">Lost something on campus, or found something that isn't yours?
+Post it here, so the right person can get it back. It takes about a minute.</p>
+
+<section class="path" aria-labelledby="lost-h">
+  <div class="path-head lost" id="lost-h">I lost something</div>
+  <ol class="steps">
+    <li><strong>Post it</strong>
+      Choose <em>I lost something</em>. Say what it is, where you think you lost it,
+      and add a photo if you have one.</li>
+    <li><strong>Check the Found items</strong>
+      Search the home page with a word like "phone" or "library". Someone may
+      already have handed yours in.</li>
+    <li><strong>Wait for a message</strong>
+      If someone finds it, they message you privately. You get an email, and a
+      number shows on <em>Messages</em>.</li>
+    <li><strong>Mark it resolved</strong>
+      Once you have it back, open <em>My posts</em> and tap <em>Mark resolved</em>
+      so people stop looking.</li>
+  </ol>
+</section>
+
+<section class="path" aria-labelledby="found-h">
+  <div class="path-head found" id="found-h">I found something</div>
+  <ol class="steps">
+    <li><strong>Post it</strong>
+      Choose <em>I found something</em>, say where you found it, and add a photo.
+      Keep the item safe, or hand it to campus security.</li>
+    <li><strong>Write a verification question</strong>
+      Ask something only the real owner would know, such as "What is on the lock
+      screen?". Never put the answer in the description.</li>
+    <li><strong>Review claims</strong>
+      When someone says it's theirs, you see their answer under <em>Claims</em>.
+      You decide: <em>Approve</em> or <em>Reject</em>.</li>
+    <li><strong>Arrange the handover</strong>
+      Approving opens a private chat with them. Agree on a busy place, hand it
+      over, then mark the post resolved.</li>
+  </ol>
+</section>
+
+<section class="path" aria-labelledby="claim-h">
+  <div class="path-head claim" id="claim-h">I want to claim a found item</div>
+  <ol class="steps">
+    <li><strong>Tap Claim</strong>
+      Open the found item that looks like yours and tap <em>Claim</em>.</li>
+    <li><strong>Confirm you're a student (first time only)</strong>
+      Enter your student registration number once. It must be on the campus list,
+      and each number works for one person only.</li>
+    <li><strong>Answer the question</strong>
+      Answer the finder's question as precisely as you can.</li>
+    <li><strong>Wait for the finder</strong>
+      You get an email when they decide. If you're approved, a private chat opens
+      so you can arrange to collect it.</li>
+  </ol>
+</section>
+
+<div class="safety">
+  <h2>Stay safe</h2>
+  <ul>
+    <li>Meet somewhere busy on campus, like the security office or the library desk.</li>
+    <li>Never pay anyone to get your item back, and never send money for "delivery".</li>
+    <li>Don't post private details in public comments. Use the private chat instead.</li>
+    <li>Check an item in person before you hand it over or take it, especially phones and ID cards.</li>
+    <li>If a post looks fake, rude or wrong, tap <em>Report</em> on it.</li>
+  </ul>
+</div>
+
+<h2>Questions</h2>
+<div class="faq">
+  <details>
+    <summary>Do I need a registration number to join?</summary>
+    <p>No. Sign in with any Google account to browse, post, comment and send
+    messages. The registration number is asked only the first time you try to
+    claim an item.</p>
+  </details>
+  <details>
+    <summary>Why do you ask for my registration number?</summary>
+    <p>To make sure the person claiming an item is a student at this campus. Each
+    number can be linked to one account only.</p>
+  </details>
+  <details>
+    <summary>I typed my number wrong too many times.</summary>
+    <p>After five wrong tries verification locks, to stop people guessing other
+    students' numbers. Ask the site admin to unlock you.</p>
+  </details>
+  <details>
+    <summary>Who can read my private messages?</summary>
+    <p>Only you and the other person. Site administrators can technically open
+    messages, and only do so to look into a report or a problem.</p>
+  </details>
+  <details>
+    <summary>What happens to my photos?</summary>
+    <p>They are shrunk so pages load fast on mobile data. Hidden location details
+    that phones add to photos are removed.</p>
+  </details>
+  <details>
+    <summary>Can I change or delete a post?</summary>
+    <p>Yes. Open <em>My posts</em> to edit, mark resolved, or delete any of your posts.</p>
+  </details>
+  <details>
+    <summary>How do I stop the emails?</summary>
+    <p>Open <em>Settings</em> and untick the email box. You will still see
+    everything on the site.</p>
+  </details>
+  <details>
+    <summary>Can I use it like a phone app?</summary>
+    <p>Yes. Open <em>Settings</em> and tap <em>Install the app</em>. On iPhone,
+    use Share, then Add to Home Screen.</p>
+  </details>
+</div>
+
+<div class="cta">
+  {% if user.is_authenticated %}
+    <a class="btn btn-primary" href="{% url 'items:create' %}?kind=LOST">I lost something</a>
+    <a class="btn btn-primary" href="{% url 'items:create' %}?kind=FOUND">I found something</a>
+  {% else %}
+    <a class="btn btn-ink" href="{% url 'accounts:login' %}">Sign in to get started</a>
+  {% endif %}
+  <a class="btn" href="{% url 'items:list' %}">Browse items</a>
+</div>
+{% endblock %}

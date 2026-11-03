@@ -4,12 +4,14 @@
 
 {% block content %}
 <h1>Sign in</h1>
-<p>Use your Google account. The first time, you'll also enter your student
-registration number so we know you belong to the campus.</p>
+<p>Use any Google account. You can browse, post and chat straight away. When
+you want to claim an item, we'll ask for your student registration number once.</p>
 
 <form method="post" action="{% url 'google_login' %}">
   {% csrf_token %}
   {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
   <button type="submit" class="btn-ink">Continue with Google</button>
 </form>
+
+<p class="meta" style="margin-top:1.25rem">New here? <a href="{% url 'items:how' %}">See how it works</a>.</p>
 {% endblock %}

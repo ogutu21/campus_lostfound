@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import dashboard, my_posts, pwa, views
+from . import dashboard, my_posts, pages, pwa, views
 
 app_name = "items"
 
@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.item_list, name="list"),
     path("new/", views.item_create, name="create"),
     path("mine/", my_posts.my_posts, name="mine"),
+    path("how-it-works/", pages.how_it_works, name="how"),
     path("<int:pk>/", views.item_detail, name="detail"),
     path("<int:pk>/edit/", views.item_edit, name="edit"),
     path("<int:pk>/delete/", views.item_delete, name="delete"),

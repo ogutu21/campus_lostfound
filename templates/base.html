@@ -94,6 +94,7 @@
     main { max-width: 46rem; margin: 1.5rem auto 3rem; padding: 0 1rem; }
     footer { max-width: 46rem; margin: 0 auto; padding: 0 1rem 2.5rem;
              color: var(--ink-soft); font-size: .9rem; }
+    footer p { margin: 0 0 .35rem; }
     .messages { list-style: none; margin: 0 0 1rem; padding: 0; }
     .messages li, .notice { background: var(--surface); border: 1px solid var(--line);
           border-left: 6px solid var(--found); padding: .7rem .9rem;
@@ -265,7 +266,8 @@
   </main>
 
   <footer>
-    Handing an item over? Meet somewhere busy on campus, like the security office.
+    <p>Handing an item over? Meet somewhere busy on campus, like the security office.</p>
+    <p><a href="{% url 'items:how' %}">How it works</a></p>
   </footer>
 
   {% if user.is_authenticated %}
