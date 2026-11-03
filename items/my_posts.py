@@ -5,16 +5,23 @@ from django.shortcuts import render
 
 from .models import Claim, Item
 
+TABS = {
+    "active": Item.Status.ACTIVE,
+    "resolved": Item.Status.RESOLVED,
+    "expired": Item.Status.EXPIRED,
+}
+
 
 @login_required
 def my_posts(request):
     """Everything the signed-in user has posted, in one place."""
-    show = "resolved" if request.GET.get("show") == "resolved" else "active"
-    status = Item.Status.RESOLVED if show == "resolved" else Item.Status.ACTIVE
+    show = request.GET.get("show")
+    if show not in TABS:
+        show = "active"
 
     mine = Item.objects.filter(poster=request.user)
     items = (
-        mine.filter(status=status)
+        mine.filter(status=TABS[show])
         .annotate(
             comment_count=Count("comments", distinct=True),
             pending_claims=Count(
@@ -30,4 +37,5 @@ def my_posts(request):
         "show": show,
         "active_total": mine.filter(status=Item.Status.ACTIVE).count(),
         "resolved_total": mine.filter(status=Item.Status.RESOLVED).count(),
+        "expired_total": mine.filter(status=Item.Status.EXPIRED).count(),
     })

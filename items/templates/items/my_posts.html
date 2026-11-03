@@ -4,7 +4,7 @@
 
 {% block content %}
 <style>
-  .tabs { display: flex; gap: .4rem; margin: 0 0 1.25rem; }
+  .tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1.25rem; }
   .tabs a { display: inline-flex; align-items: center; min-height: 2.75rem;
             padding: 0 1.1rem; border: 2px solid var(--ink); border-radius: 999px;
             background: var(--surface); color: var(--ink); font-weight: 700;
@@ -16,6 +16,8 @@
   .tag.LOST { background: var(--lost); }
   .tag.FOUND { background: var(--found); }
   .flag { color: var(--lost); font-weight: 700; }
+  .nudge { background: #FFF6DB; border-left: 5px solid var(--amber);
+           border-radius: 6px; padding: .5rem .8rem; margin: .7rem 0 0; }
   .row-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .7rem; }
   .row-actions form { margin: 0; }
   .row-actions .btn, .row-actions button { min-height: 2.5rem; padding: .35rem .85rem; }
@@ -26,6 +28,7 @@
 <div class="tabs">
   <a href="{% url 'items:mine' %}" {% if show == "active" %}aria-current="page"{% endif %}>Still looking ({{ active_total }})</a>
   <a href="{% url 'items:mine' %}?show=resolved" {% if show == "resolved" %}aria-current="page"{% endif %}>Resolved ({{ resolved_total }})</a>
+  <a href="{% url 'items:mine' %}?show=expired" {% if show == "expired" %}aria-current="page"{% endif %}>Expired ({{ expired_total }})</a>
 </div>
 
 {% for item in page_obj %}
@@ -47,10 +50,23 @@
       <p class="flag">Hidden by a moderator. Only you and staff can see this post.</p>
     {% endif %}
 
+    {% if item.status == "ACTIVE" and item.reminded_at %}
+      <p class="nudge">Still looking? This post comes down on
+        <strong>{{ item.expires_on|date:"j M" }}</strong> unless you renew it.</p>
+    {% elif item.status == "EXPIRED" %}
+      <p class="nudge">Taken down because it wasn't renewed. Nothing was deleted.</p>
+    {% endif %}
+
     <div class="row-actions">
       <a class="btn" href="{% url 'items:detail' item.pk %}">View</a>
-      <a class="btn" href="{% url 'items:edit' item.pk %}">Edit</a>
-      {% if item.status == "ACTIVE" %}
+      {% if item.status != "RESOLVED" %}<a class="btn" href="{% url 'items:edit' item.pk %}">Edit</a>{% endif %}
+      {% if item.status == "EXPIRED" or item.reminded_at and item.status == "ACTIVE" %}
+        <form method="post" action="{% url 'items:renew' item.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-primary">{% if item.status == "EXPIRED" %}Put it back up{% else %}Renew{% endif %}</button>
+        </form>
+      {% endif %}
+      {% if item.status != "RESOLVED" %}
         <form method="post" action="{% url 'items:resolve' item.pk %}">
           {% csrf_token %}
           <button type="submit">Mark resolved</button>
@@ -62,6 +78,8 @@
 {% empty %}
   {% if show == "resolved" %}
     <p class="meta">Nothing resolved yet. When you mark a post resolved it moves here.</p>
+  {% elif show == "expired" %}
+    <p class="meta">Nothing has expired. Posts come down only if they sit for a long time and a reminder goes unanswered.</p>
   {% else %}
     <p>You have no posts yet.</p>
     <p>

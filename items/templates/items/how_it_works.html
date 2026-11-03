@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load site_info %}
 
 {% block title %}How it works{% endblock %}
 
 {% block content %}
+{% contact_email as contact %}
 <style>
   .lead { font-size: 1.15rem; max-width: 36rem; margin: 0 0 1.5rem; }
   .path { background: var(--surface); border: 1px solid var(--line);
@@ -114,7 +116,20 @@ Post it here, so the right person can get it back. It takes about a minute.</p>
   <details>
     <summary>I typed my number wrong too many times.</summary>
     <p>After five wrong tries verification locks, to stop people guessing other
-    students' numbers. Ask the site admin to unlock you.</p>
+    students' numbers.
+    {% if contact %}Email <a href="mailto:{{ contact }}">{{ contact }}</a> and we'll unlock you.
+    {% else %}Ask the site admin to unlock you.{% endif %}</p>
+  </details>
+  <details>
+    <summary>How long do posts stay up?</summary>
+    <p>After 30 days we email you to ask if it's still unresolved. Tap <em>Renew</em>
+    to keep it up for another 30 days, or <em>Mark resolved</em> if it's sorted.</p>
+  </details>
+  <details>
+    <summary>My post disappeared. What happened?</summary>
+    <p>If a reminder goes unanswered for 7 days, the post comes down from the public
+    list. Nothing is deleted. Open <em>My posts</em>, go to the <em>Expired</em>
+    tab, and tap <em>Put it back up</em>.</p>
   </details>
   <details>
     <summary>Who can read my private messages?</summary>
@@ -132,14 +147,21 @@ Post it here, so the right person can get it back. It takes about a minute.</p>
   </details>
   <details>
     <summary>How do I stop the emails?</summary>
-    <p>Open <em>Settings</em> and untick the email box. You will still see
-    everything on the site.</p>
+    <p>Open <em>Settings</em> and untick the email box. That stops comment, claim
+    and message emails. You will still get the occasional notice about your own
+    old posts, and everything is always on the site.</p>
   </details>
   <details>
     <summary>Can I use it like a phone app?</summary>
     <p>Yes. Open <em>Settings</em> and tap <em>Install the app</em>. On iPhone,
     use Share, then Add to Home Screen.</p>
   </details>
+  {% if contact %}
+  <details>
+    <summary>How do I reach the people who run this?</summary>
+    <p>Email <a href="mailto:{{ contact }}">{{ contact }}</a>.</p>
+  </details>
+  {% endif %}
 </div>
 
 <div class="cta">

@@ -79,4 +79,23 @@
 {% empty %}
   <p class="meta">Nobody is locked out.</p>
 {% endfor %}
+
+<h2>Housekeeping</h2>
+<div class="card">
+  <p>Posts that sit for 30 days get a reminder email. If the poster doesn't
+  answer within 7 days, the post comes down (it is never deleted, and the poster
+  can put it back). <strong>Preview</strong> counts what would happen without
+  sending anything.</p>
+  <div class="row-actions">
+    <form method="post" action="{% url 'items:run_now' %}">
+      {% csrf_token %}
+      <input type="hidden" name="dry_run" value="1">
+      <button type="submit">Preview</button>
+    </form>
+    <form method="post" action="{% url 'items:run_now' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-primary">Send reminders now</button>
+    </form>
+  </div>
+</div>
 {% endblock %}

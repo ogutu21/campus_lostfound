@@ -1,5 +1,10 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
+
+REMIND_AFTER_DAYS = 30   # a post gets a reminder after this long
+GRACE_DAYS = 7           # days to answer the reminder before the post comes down
 
 
 class Item(models.Model):
@@ -17,7 +22,8 @@ class Item(models.Model):
 
     class Status(models.TextChoices):
         ACTIVE = "ACTIVE", "Still looking"
-        RESOLVED = "RESOLVED", "Resolved"
+        RESOLVED = "RESOLVED", "Resolved , owner claimed the item"
+        EXPIRED = "EXPIRED", "Expired"
 
     poster = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -48,6 +54,14 @@ class Item(models.Model):
         default=False,
         help_text="Hidden by a moderator. Only the poster and staff can see it.",
     )
+    last_confirmed_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When the poster last pressed Renew. Empty means never.",
+    )
+    reminded_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When we emailed the poster asking if this is still unresolved.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -56,6 +70,13 @@ class Item(models.Model):
 
     def __str__(self):
         return f"[{self.get_kind_display()}] {self.title}"
+
+    @property
+    def expires_on(self):
+        """The date the post comes down if the poster doesn't renew it."""
+        if self.reminded_at:
+            return self.reminded_at + timedelta(days=GRACE_DAYS)
+        return None
 
 
 class Comment(models.Model):
@@ -69,7 +90,7 @@ class Comment(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
-        return f"{self.author.id_number} on {self.item.title}"
+        return f"{self.author.get_full_name()} on {self.item.title}"
 
 
 class Thread(models.Model):
@@ -88,7 +109,7 @@ class Thread(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.starter.id_number} about {self.item.title}"
+        return f"{self.starter.get_full_name()} about {self.item.title}"
 
 
 class Message(models.Model):
@@ -103,7 +124,7 @@ class Message(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
-        return f"{self.sender.id_number}: {self.body[:30]}"
+        return f"{self.sender.get_full_name()}: {self.body[:30]}"
 
 
 class Report(models.Model):
@@ -139,7 +160,7 @@ class Claim(models.Model):
     """Someone saying 'this found item is mine', with an answer to the verification question."""
 
     class Status(models.TextChoices):
-        PENDING = "PENDING", "Waiting for the finder"
+        PENDING = "PENDING", "Waiting for the owner to respond"
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Rejected"
 
@@ -159,4 +180,4 @@ class Claim(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.claimant.id_number} claims {self.item.title}"
+        return f"{self.claimant.get_full_name()} claims {self.item.title}"

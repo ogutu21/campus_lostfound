@@ -1,19 +1,24 @@
 {% extends "base.html" %}
+{% load site_info %}
 
 {% block title %}Verify your registration number{% endblock %}
 
 {% block content %}
-<h1>One last step</h1>
+<h1>Confirm you're a student</h1>
 
 {% if locked %}
-  <p class="notice">Too many wrong numbers were entered, so this account is locked.
-  Please contact the site admin to unlock it.</p>
+  {% contact_email as contact %}
+  <p class="notice">Too many wrong numbers were entered, so verification is locked.
+  {% if contact %}Please email <a href="mailto:{{ contact }}">{{ contact }}</a> and we'll unlock it.
+  {% else %}Please contact the site admin to unlock it.{% endif %}</p>
 {% else %}
-  <p>Enter your student registration number. You only do this once. It must be
-  on the campus list, and each number can be used by one person only.</p>
+  <p>To claim an item, we need your student registration number. You only do
+  this once. It must be on the campus list, and each number can be used by one
+  person only.</p>
 
   <form method="post">
     {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     {{ form.as_p }}
     <p class="meta">{{ left }} attempt{{ left|pluralize }} left.</p>
     <button type="submit">Verify</button>

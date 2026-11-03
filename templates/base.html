@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static site_info %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -266,8 +266,12 @@
   </main>
 
   <footer>
+    {% contact_email as contact %}
     <p>Handing an item over? Meet somewhere busy on campus, like the security office.</p>
-    <p><a href="{% url 'items:how' %}">How it works</a></p>
+    <p>
+      <a href="{% url 'items:how' %}">How it works</a>
+      {% if contact %} · Need help? <a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}
+    </p>
   </footer>
 
   {% if user.is_authenticated %}
