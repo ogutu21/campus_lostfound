@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}My posts{% endblock %}
+
+{% block content %}
+<style>
+  .tabs { display: flex; gap: .4rem; margin: 0 0 1.25rem; }
+  .tabs a { display: inline-flex; align-items: center; min-height: 2.75rem;
+            padding: 0 1.1rem; border: 2px solid var(--ink); border-radius: 999px;
+            background: var(--surface); color: var(--ink); font-weight: 700;
+            text-decoration: none; }
+  .tabs a[aria-current=page] { background: var(--ink); color: #fff; }
+  .mine-head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+  .tag { display: inline-block; padding: .1rem .6rem; border-radius: 999px;
+         color: #fff; font: 800 .85rem/1.4 var(--display); }
+  .tag.LOST { background: var(--lost); }
+  .tag.FOUND { background: var(--found); }
+  .flag { color: var(--lost); font-weight: 700; }
+  .row-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .7rem; }
+  .row-actions form { margin: 0; }
+  .row-actions .btn, .row-actions button { min-height: 2.5rem; padding: .35rem .85rem; }
+</style>
+
+<h1>My posts</h1>
+
+<div class="tabs">
+  <a href="{% url 'items:mine' %}" {% if show == "active" %}aria-current="page"{% endif %}>Still looking ({{ active_total }})</a>
+  <a href="{% url 'items:mine' %}?show=resolved" {% if show == "resolved" %}aria-current="page"{% endif %}>Resolved ({{ resolved_total }})</a>
+</div>
+
+{% for item in page_obj %}
+  <div class="card">
+    <div class="mine-head">
+      <span class="tag {{ item.kind }}">{{ item.get_kind_display }}</span>
+      <strong><a href="{% url 'items:detail' item.pk %}">{{ item.title }}</a></strong>
+    </div>
+    <div class="meta">
+      No. {{ item.pk }} · {{ item.location }} · posted {{ item.created_at|date:"j M Y" }}
+    </div>
+    <div class="meta">
+      {{ item.comment_count }} comment{{ item.comment_count|pluralize }}
+      {% if item.kind == "FOUND" %}
+        · {% if item.pending_claims %}<a href="{% url 'items:claims' %}"><strong>{{ item.pending_claims }} claim{{ item.pending_claims|pluralize }} waiting</strong></a>{% else %}no claims waiting{% endif %}
+      {% endif %}
+    </div>
+    {% if item.is_hidden %}
+      <p class="flag">Hidden by a moderator. Only you and staff can see this post.</p>
+    {% endif %}
+
+    <div class="row-actions">
+      <a class="btn" href="{% url 'items:detail' item.pk %}">View</a>
+      <a class="btn" href="{% url 'items:edit' item.pk %}">Edit</a>
+      {% if item.status == "ACTIVE" %}
+        <form method="post" action="{% url 'items:resolve' item.pk %}">
+          {% csrf_token %}
+          <button type="submit">Mark resolved</button>
+        </form>
+      {% endif %}
+      <a class="btn" href="{% url 'items:delete' item.pk %}">Delete</a>
+    </div>
+  </div>
+{% empty %}
+  {% if show == "resolved" %}
+    <p class="meta">Nothing resolved yet. When you mark a post resolved it moves here.</p>
+  {% else %}
+    <p>You have no posts yet.</p>
+    <p>
+      <a class="btn btn-primary" href="{% url 'items:create' %}?kind=LOST">I lost something</a>
+      <a class="btn btn-primary" href="{% url 'items:create' %}?kind=FOUND">I found something</a>
+    </p>
+  {% endif %}
+{% endfor %}
+
+{% if page_obj.has_other_pages %}
+  <div class="pager">
+    {% if page_obj.has_previous %}
+      <a class="btn" href="?show={{ show }}&page={{ page_obj.previous_page_number }}">Newer</a>
+    {% else %}<span></span>{% endif %}
+    <span class="meta">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn" href="?show={{ show }}&page={{ page_obj.next_page_number }}">Older</a>
+    {% else %}<span></span>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

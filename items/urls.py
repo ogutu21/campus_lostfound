@@ -1,12 +1,13 @@
 from django.urls import path
 
-from . import dashboard, views
+from . import dashboard, my_posts, pwa, views
 
 app_name = "items"
 
 urlpatterns = [
     path("", views.item_list, name="list"),
     path("new/", views.item_create, name="create"),
+    path("mine/", my_posts.my_posts, name="mine"),
     path("<int:pk>/", views.item_detail, name="detail"),
     path("<int:pk>/edit/", views.item_edit, name="edit"),
     path("<int:pk>/delete/", views.item_delete, name="delete"),
@@ -24,4 +25,9 @@ urlpatterns = [
     path("dashboard/", dashboard.dashboard, name="dashboard"),
     path("dashboard/reports/<int:pk>/", dashboard.report_resolve, name="report_resolve"),
     path("dashboard/users/<int:pk>/unlock/", dashboard.unlock_user, name="unlock_user"),
+
+    # Install-to-home-screen pieces. sw.js must live at the site root.
+    path("manifest.webmanifest", pwa.manifest, name="manifest"),
+    path("sw.js", pwa.service_worker, name="service_worker"),
+    path("offline/", pwa.offline, name="offline"),
 ]

@@ -15,4 +15,50 @@
   {{ form.as_p }}
   <button type="submit">Save settings</button>
 </form>
+
+<section id="install" class="card" style="margin-top:2rem">
+  <h2>Put it on your home screen</h2>
+  <p>Open Lost &amp; Found like an app, with its own icon and no browser bar.</p>
+  <button type="button" id="install-btn" hidden>Install the app</button>
+  <p class="meta" id="install-help">
+    <strong>iPhone:</strong> open this page in Safari, tap the Share button, then
+    <em>Add to Home Screen</em>.<br>
+    <strong>Android:</strong> if there's no button above, open the browser menu and
+    choose <em>Install app</em> or <em>Add to Home screen</em>.
+  </p>
+</section>
+
+<script>
+(function () {
+  var section = document.getElementById('install');
+  var button = document.getElementById('install-btn');
+  var help = document.getElementById('install-help');
+  var deferred = null;
+
+  // Already running as the installed app? Then there's nothing to install.
+  var standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+  if (standalone) { section.hidden = true; return; }
+
+  // Chrome on Android offers a one-tap install through this event.
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferred = e;
+    button.hidden = false;
+    help.hidden = true;
+  });
+
+  button.addEventListener('click', function () {
+    if (!deferred) return;
+    deferred.prompt();
+    deferred.userChoice.then(function () {
+      deferred = null;
+      button.hidden = true;
+      help.hidden = false;
+    });
+  });
+
+  window.addEventListener('appinstalled', function () { section.hidden = true; });
+})();
+</script>
 {% endblock %}
